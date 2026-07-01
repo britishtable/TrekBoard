@@ -1,5 +1,6 @@
 import type { Category, Place, Trip } from '../types';
 import { CATEGORIES, categoryColor, categoryLabel } from '../config/categories';
+import { haversineKm, formatDistance, estWalkMinutes } from '../lib/distance';
 
 interface SidebarProps {
   trip: Trip;
@@ -113,46 +114,57 @@ export default function Sidebar({
             ) : (
               <ul className="space-y-1">
                 {g.places.map((p, i) => (
-                  <li key={p.id} className="flex items-center gap-1">
-                    <div className="flex flex-col">
+                  <li key={p.id}>
+                    {i > 0 && (
+                      <div className="py-0.5 pl-8 text-[11px] text-gray-400">
+                        {(() => {
+                          const prev = g.places[i - 1];
+                          const km = haversineKm(prev, p);
+                          return `↕ ${formatDistance(km)} · ~${estWalkMinutes(km)} min walk`;
+                        })()}
+                      </div>
+                    )}
+                    <div className="flex items-center gap-1">
+                      <div className="flex flex-col">
+                        <button
+                          type="button"
+                          aria-label={`Move ${p.name} up`}
+                          disabled={i === 0}
+                          onClick={() => onMovePlace(p.id, 'up')}
+                          className="text-xs leading-none text-gray-400 enabled:hover:text-gray-700 disabled:opacity-30"
+                        >
+                          ▲
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`Move ${p.name} down`}
+                          disabled={i === g.places.length - 1}
+                          onClick={() => onMovePlace(p.id, 'down')}
+                          className="text-xs leading-none text-gray-400 enabled:hover:text-gray-700 disabled:opacity-30"
+                        >
+                          ▼
+                        </button>
+                      </div>
                       <button
                         type="button"
-                        aria-label={`Move ${p.name} up`}
-                        disabled={i === 0}
-                        onClick={() => onMovePlace(p.id, 'up')}
-                        className="text-xs leading-none text-gray-400 enabled:hover:text-gray-700 disabled:opacity-30"
+                        onClick={() => onSelectPlace(p.id)}
+                        className={`flex flex-1 items-center gap-2 rounded px-2 py-1 text-left text-sm hover:bg-gray-100 ${
+                          p.id === selectedId ? 'bg-gray-100 font-medium' : ''
+                        }`}
                       >
-                        ▲
-                      </button>
-                      <button
-                        type="button"
-                        aria-label={`Move ${p.name} down`}
-                        disabled={i === g.places.length - 1}
-                        onClick={() => onMovePlace(p.id, 'down')}
-                        className="text-xs leading-none text-gray-400 enabled:hover:text-gray-700 disabled:opacity-30"
-                      >
-                        ▼
+                        <span
+                          className="inline-block h-3 w-3 shrink-0 rounded-full"
+                          style={{ background: categoryColor(p.category) }}
+                          title={categoryLabel(p.category)}
+                        />
+                        {p.startTime && (
+                          <span className="tabular-nums text-xs text-gray-500">
+                            {p.startTime}
+                          </span>
+                        )}
+                        <span className="truncate">{p.name}</span>
                       </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => onSelectPlace(p.id)}
-                      className={`flex flex-1 items-center gap-2 rounded px-2 py-1 text-left text-sm hover:bg-gray-100 ${
-                        p.id === selectedId ? 'bg-gray-100 font-medium' : ''
-                      }`}
-                    >
-                      <span
-                        className="inline-block h-3 w-3 shrink-0 rounded-full"
-                        style={{ background: categoryColor(p.category) }}
-                        title={categoryLabel(p.category)}
-                      />
-                      {p.startTime && (
-                        <span className="tabular-nums text-xs text-gray-500">
-                          {p.startTime}
-                        </span>
-                      )}
-                      <span className="truncate">{p.name}</span>
-                    </button>
                   </li>
                 ))}
               </ul>
