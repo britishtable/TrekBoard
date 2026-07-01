@@ -29,7 +29,13 @@ TrekBoard adds it with its name and category already filled in. Or explore an ar
 type, like cafes, museums, viewpoints, or hotels, and hit "Search this area" to see
 everything of that kind nearby, then add the ones you want with a tap.
 
-Give each place a category — Food, Sights, Lodging, Transport, or Other. Every category
+Saved places can anchor a search too. Open any place you've added — your hotel, say —
+and hit "Search nearby" in its details panel to see what's within about a ten-minute
+walk. The map frames that pocket of the city, and each result's popup shows how far it
+is from your starting point.
+
+Give each place a category — Food, Nightlife, Sights, Entertainment, Outdoors,
+Shopping, Lodging, Transport, or Other. Every category
 has its own colored marker, and you can filter the map and list down to just the ones you
 care about.
 
