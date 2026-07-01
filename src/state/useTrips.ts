@@ -78,6 +78,17 @@ export function useTrips(store: TripStore) {
     [mutateCurrent],
   );
 
+  const movePlace = useCallback(
+    (id: string, dir: 'up' | 'down') =>
+      mutateCurrent((t) => ops.movePlaceWithinDay(t, id, dir)),
+    [mutateCurrent],
+  );
+
+  const sortDay = useCallback(
+    (dayId: string | null) => mutateCurrent((t) => ops.sortDayByTime(t, dayId)),
+    [mutateCurrent],
+  );
+
   const exportTrips = useCallback((): string => serializeBackup(trips), [trips]);
 
   const importTrips = useCallback((json: string): void => {
@@ -98,6 +109,8 @@ export function useTrips(store: TripStore) {
     updatePlace,
     removePlace,
     addDay,
+    movePlace,
+    sortDay,
     exportTrips,
     importTrips,
   };

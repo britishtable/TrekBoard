@@ -219,6 +219,8 @@ export default function AppShell() {
               onToggleCategory={toggleCategory}
               onSetDayFilter={setDayFilter}
               onAddDay={trips.addDay}
+              onMovePlace={trips.movePlace}
+              onSortDay={trips.sortDay}
             />
           </div>
         </aside>

@@ -1,4 +1,6 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { vi } from 'vitest';
 import Sidebar from './Sidebar';
 import { addDay, addPlace, createPlace, createTrip } from '../state/tripOps';
 import type { Category } from '../types';
@@ -22,6 +24,8 @@ test('lists places grouped with an Unassigned group', () => {
       onToggleCategory={() => {}}
       onSetDayFilter={() => {}}
       onAddDay={() => {}}
+      onMovePlace={() => {}}
+      onSortDay={() => {}}
     />,
   );
   expect(screen.getByText('Louvre')).toBeInTheDocument();
@@ -40,8 +44,39 @@ test('category filter hides non-matching places', () => {
       onToggleCategory={() => {}}
       onSetDayFilter={() => {}}
       onAddDay={() => {}}
+      onMovePlace={() => {}}
+      onSortDay={() => {}}
     />,
   );
   expect(screen.getByText('Louvre')).toBeInTheDocument();
   expect(screen.queryByText('Cafe')).not.toBeInTheDocument();
+});
+
+test('up/down buttons call onMovePlace, disabled at group boundaries', async () => {
+  const user = userEvent.setup();
+  const onMovePlace = vi.fn();
+  let t = addDay(createTrip('Paris'));
+  const dayId = t.days[0].id;
+  t = addPlace(t, createPlace({ name: 'First', lat: 0, lng: 0, category: 'other', dayId }));
+  t = addPlace(t, createPlace({ name: 'Second', lat: 0, lng: 0, category: 'other', dayId }));
+
+  render(
+    <Sidebar
+      trip={t}
+      selectedId={null}
+      categoryFilter={new Set()}
+      dayFilter={null}
+      onSelectPlace={() => {}}
+      onToggleCategory={() => {}}
+      onSetDayFilter={() => {}}
+      onAddDay={() => {}}
+      onMovePlace={onMovePlace}
+      onSortDay={() => {}}
+    />,
+  );
+
+  // 'First' can move down but not up; click its down button.
+  await user.click(screen.getByRole('button', { name: /move First down/i }));
+  expect(onMovePlace).toHaveBeenCalledWith(t.places[0].id, 'down');
+  expect(screen.getByRole('button', { name: /move First up/i })).toBeDisabled();
 });

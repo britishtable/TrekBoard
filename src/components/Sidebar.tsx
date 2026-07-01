@@ -10,6 +10,8 @@ interface SidebarProps {
   onToggleCategory(cat: Category): void;
   onSetDayFilter(dayId: string | null): void;
   onAddDay(): void;
+  onMovePlace(id: string, dir: 'up' | 'down'): void;
+  onSortDay(dayId: string | null): void;
 }
 
 export default function Sidebar({
@@ -21,6 +23,8 @@ export default function Sidebar({
   onToggleCategory,
   onSetDayFilter,
   onAddDay,
+  onMovePlace,
+  onSortDay,
 }: SidebarProps) {
   const visible = trip.places.filter((p) => {
     const catOk = categoryFilter.size === 0 || categoryFilter.has(p.category);
@@ -30,12 +34,13 @@ export default function Sidebar({
     return catOk && dayOk;
   });
 
-  const groups: { label: string; places: Place[] }[] = [
+  const groups: { label: string; dayId: string | null; places: Place[] }[] = [
     ...trip.days.map((d) => ({
       label: d.label,
+      dayId: d.id as string | null,
       places: visible.filter((p) => p.dayId === d.id),
     })),
-    { label: 'Unassigned', places: visible.filter((p) => p.dayId === null) },
+    { label: 'Unassigned', dayId: null, places: visible.filter((p) => p.dayId === null) },
   ];
 
   return (
@@ -89,19 +94,50 @@ export default function Sidebar({
       <div className="flex-1 overflow-auto p-3">
         {groups.map((g) => (
           <div key={g.label} className="mb-4">
-            <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
-              {g.label}
-            </h3>
+            <div className="mb-1 flex items-center justify-between">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                {g.label}
+              </h3>
+              {g.places.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => onSortDay(g.dayId)}
+                  className="text-xs text-blue-600 hover:underline"
+                >
+                  Sort by time
+                </button>
+              )}
+            </div>
             {g.places.length === 0 ? (
               <p className="text-xs text-gray-400">No places</p>
             ) : (
               <ul className="space-y-1">
-                {g.places.map((p) => (
-                  <li key={p.id}>
+                {g.places.map((p, i) => (
+                  <li key={p.id} className="flex items-center gap-1">
+                    <div className="flex flex-col">
+                      <button
+                        type="button"
+                        aria-label={`Move ${p.name} up`}
+                        disabled={i === 0}
+                        onClick={() => onMovePlace(p.id, 'up')}
+                        className="text-xs leading-none text-gray-400 enabled:hover:text-gray-700 disabled:opacity-30"
+                      >
+                        ▲
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Move ${p.name} down`}
+                        disabled={i === g.places.length - 1}
+                        onClick={() => onMovePlace(p.id, 'down')}
+                        className="text-xs leading-none text-gray-400 enabled:hover:text-gray-700 disabled:opacity-30"
+                      >
+                        ▼
+                      </button>
+                    </div>
                     <button
                       type="button"
                       onClick={() => onSelectPlace(p.id)}
-                      className={`flex w-full items-center gap-2 rounded px-2 py-1 text-left text-sm hover:bg-gray-100 ${
+                      className={`flex flex-1 items-center gap-2 rounded px-2 py-1 text-left text-sm hover:bg-gray-100 ${
                         p.id === selectedId ? 'bg-gray-100 font-medium' : ''
                       }`}
                     >
@@ -110,6 +146,11 @@ export default function Sidebar({
                         style={{ background: categoryColor(p.category) }}
                         title={categoryLabel(p.category)}
                       />
+                      {p.startTime && (
+                        <span className="tabular-nums text-xs text-gray-500">
+                          {p.startTime}
+                        </span>
+                      )}
                       <span className="truncate">{p.name}</span>
                     </button>
                   </li>
