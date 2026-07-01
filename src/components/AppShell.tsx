@@ -4,7 +4,7 @@ import type { Suggestion } from '../services/overpass';
 import { searchArea } from '../services/overpass';
 import type { IdentifiedPoi } from '../lib/pickPoi';
 import type { Bounds } from '../lib/bbox';
-import { isBboxSearchable } from '../lib/bbox';
+import { boundsAroundPoint, isBboxSearchable } from '../lib/bbox';
 import { getDiscoveryType } from '../config/discoveryTypes';
 import { createLocalTripStore } from '../storage/localTripStore';
 import { useTrips } from '../state/useTrips';
@@ -15,6 +15,7 @@ import PlaceDetailsPanel from './PlaceDetailsPanel';
 import DiscoveryPanel, { type DiscoveryStatus } from './DiscoveryPanel';
 
 const DEFAULT_CENTER: [number, number] = [48.8566, 2.3522]; // Paris
+const NEARBY_RADIUS_M = 800; // roughly a 10-minute walk
 
 export default function AppShell() {
   const store = useMemo(() => createLocalTripStore(), []);
@@ -30,6 +31,8 @@ export default function AppShell() {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [discoveryStatus, setDiscoveryStatus] = useState<DiscoveryStatus>({ kind: 'idle' });
   const discoveryAbort = useRef<AbortController | null>(null);
+  const [nearbyAnchor, setNearbyAnchor] = useState<{ lat: number; lng: number } | null>(null);
+  const [frameBounds, setFrameBounds] = useState<Bounds | null>(null);
 
   const current = trips.currentTrip;
   const selectedPlace =
@@ -76,18 +79,12 @@ export default function AppShell() {
     return 'Couldn’t load suggestions — check your connection.';
   }
 
-  function handleDiscoverySearch(typeId: string) {
-    if (!bounds) return;
-    if (!isBboxSearchable(bounds)) {
-      setSuggestions([]);
-      setDiscoveryStatus({ kind: 'too-large' });
-      return;
-    }
+  function runDiscoverySearch(searchBounds: Bounds, typeId: string) {
     discoveryAbort.current?.abort();
     const controller = new AbortController();
     discoveryAbort.current = controller;
     setDiscoveryStatus({ kind: 'loading' });
-    searchArea(bounds, typeId, controller.signal)
+    searchArea(searchBounds, typeId, controller.signal)
       .then((results) => {
         setSuggestions(results);
         if (results.length === 0) {
@@ -102,6 +99,26 @@ export default function AppShell() {
         setSuggestions([]);
         setDiscoveryStatus({ kind: 'error', message: discoveryErrorMessage(err) });
       });
+  }
+
+  function handleDiscoverySearch(typeId: string) {
+    if (!bounds) return;
+    if (!isBboxSearchable(bounds)) {
+      setSuggestions([]);
+      setDiscoveryStatus({ kind: 'too-large' });
+      return;
+    }
+    setNearbyAnchor(null);
+    setFrameBounds(null);
+    runDiscoverySearch(bounds, typeId);
+  }
+
+  function handleNearbySearch(typeId: string) {
+    if (!selectedPlace) return;
+    const box = boundsAroundPoint(selectedPlace.lat, selectedPlace.lng, NEARBY_RADIUS_M);
+    setNearbyAnchor({ lat: selectedPlace.lat, lng: selectedPlace.lng });
+    setFrameBounds(box);
+    runDiscoverySearch(box, typeId);
   }
 
   function handleAddSuggestion(s: Suggestion) {
@@ -130,6 +147,8 @@ export default function AppShell() {
   function clearDiscovery() {
     setSuggestions([]);
     setDiscoveryStatus({ kind: 'idle' });
+    setNearbyAnchor(null);
+    setFrameBounds(null);
   }
 
   function handleExport() {
@@ -314,6 +333,8 @@ export default function AppShell() {
             suggestions={suggestions}
             selectedId={selectedId}
             center={center}
+            anchor={nearbyAnchor}
+            frameBounds={frameBounds}
             onAddPlace={handleAddPlace}
             onSelectPlace={setSelectedId}
             onAddSuggestion={handleAddSuggestion}
@@ -328,12 +349,14 @@ export default function AppShell() {
             <PlaceDetailsPanel
               place={selectedPlace}
               days={current.days}
+              discoveryStatus={discoveryStatus}
               onChange={(patch) => trips.updatePlace(selectedPlace.id, patch)}
               onDelete={() => {
                 trips.removePlace(selectedPlace.id);
                 setSelectedId(null);
               }}
               onClose={() => setSelectedId(null)}
+              onSearchNearby={handleNearbySearch}
             />
           </aside>
         )}
