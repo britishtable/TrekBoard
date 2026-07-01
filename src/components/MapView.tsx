@@ -69,7 +69,10 @@ export default function MapView({
         fillOpacity: 0.9,
       })
         .bindTooltip(p.name)
-        .on('click', () => selectRef.current(p.id))
+        .on('click', (e: L.LeafletMouseEvent) => {
+          L.DomEvent.stopPropagation(e);
+          selectRef.current(p.id);
+        })
         .addTo(group);
     }
   }, [places, selectedId]);
