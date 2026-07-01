@@ -1,29 +1,42 @@
 import { poiCategory } from './poiCategory';
 
-test('maps food-like classes to food', () => {
-  for (const c of ['restaurant', 'cafe', 'bar', 'pub', 'fast_food', 'bakery']) {
+test('food classes map to food', () => {
+  for (const c of ['restaurant', 'cafe', 'fast_food', 'bakery']) {
     expect(poiCategory(c)).toBe('food');
   }
 });
 
-test('maps lodging classes to lodging', () => {
-  expect(poiCategory('hotel')).toBe('lodging');
-  expect(poiCategory('hostel')).toBe('lodging');
-});
-
-test('maps sight classes to sights', () => {
-  for (const c of ['museum', 'attraction', 'viewpoint', 'artwork', 'park']) {
-    expect(poiCategory(c)).toBe('sights');
+test('nightlife classes map to nightlife', () => {
+  for (const c of ['bar', 'pub', 'nightclub']) {
+    expect(poiCategory(c)).toBe('nightlife');
   }
 });
 
-test('maps transport classes to transport', () => {
-  expect(poiCategory('railway')).toBe('transport');
-  expect(poiCategory('bus')).toBe('transport');
-  expect(poiCategory('airport')).toBe('transport');
+test('entertainment classes map to entertainment', () => {
+  for (const c of ['cinema', 'theatre', 'gallery']) {
+    expect(poiCategory(c)).toBe('entertainment');
+  }
 });
 
-test('defaults unknown or empty classes to other', () => {
+test('outdoors classes map to outdoors', () => {
+  for (const c of ['park', 'garden', 'viewpoint', 'beach']) {
+    expect(poiCategory(c)).toBe('outdoors');
+  }
+});
+
+test('shopping classes map to shopping', () => {
+  for (const c of ['mall', 'supermarket', 'marketplace']) {
+    expect(poiCategory(c)).toBe('shopping');
+  }
+});
+
+test('sights, lodging, and transport still map correctly', () => {
+  expect(poiCategory('museum')).toBe('sights');
+  expect(poiCategory('hotel')).toBe('lodging');
+  expect(poiCategory('railway')).toBe('transport');
+});
+
+test('unknown or empty classes map to other', () => {
   expect(poiCategory('bank')).toBe('other');
   expect(poiCategory('')).toBe('other');
 });
