@@ -23,3 +23,5 @@ export interface Trip {
   days: Day[];
   places: Place[];
 }
+
+export type { GeocodeResult } from './services/geocode';
