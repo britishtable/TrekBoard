@@ -7,7 +7,9 @@ import type { Bounds } from '../lib/bbox';
 import { categoryColor, categoryLabel } from '../config/categories';
 import { pickPoi, type IdentifiedPoi, type QueriedFeature } from '../lib/pickPoi';
 
-const STYLE_URL = 'https://tiles.openfreemap.org/styles/positron';
+// 'liberty' renders POI icons and exposes the `poi` source-layer, which
+// click-to-identify (pickPoi) queries. 'positron' has no POI layers.
+const STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
 
 interface MapViewProps {
   places: Place[];
