@@ -1,3 +1,6 @@
+# Local planning docs (spec/plan) — kept on disk, not tracked
+docs/
+
 # Dependencies
 node_modules/
 
