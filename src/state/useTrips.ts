@@ -47,12 +47,10 @@ export function useTrips(store: TripStore) {
   );
 
   const deleteCurrent = useCallback(() => {
-    setTrips((prev) => {
-      const next = prev.filter((t) => t.id !== currentTripId);
-      setCurrentTripId(next[0]?.id ?? null);
-      return next;
-    });
-  }, [currentTripId]);
+    const next = trips.filter((t) => t.id !== currentTripId);
+    setTrips(next);
+    setCurrentTripId(next[0]?.id ?? null);
+  }, [trips, currentTripId]);
 
   const addPlace = useCallback(
     (place: Omit<Place, 'id'>): string => {
