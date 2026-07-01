@@ -1,11 +1,17 @@
 import { useMemo, useRef, useState } from 'react';
 import type { Category, GeocodeResult } from '../types';
+import type { Suggestion } from '../services/overpass';
+import { searchArea } from '../services/overpass';
+import type { Bounds } from '../lib/bbox';
+import { isBboxSearchable } from '../lib/bbox';
+import { getDiscoveryType } from '../config/discoveryTypes';
 import { createLocalTripStore } from '../storage/localTripStore';
 import { useTrips } from '../state/useTrips';
 import MapView from './MapView';
 import SearchBox from './SearchBox';
 import Sidebar from './Sidebar';
 import PlaceDetailsPanel from './PlaceDetailsPanel';
+import DiscoveryPanel, { type DiscoveryStatus } from './DiscoveryPanel';
 
 const DEFAULT_CENTER: [number, number] = [48.8566, 2.3522]; // Paris
 
@@ -19,6 +25,10 @@ export default function AppShell() {
   const [center, setCenter] = useState<[number, number]>(DEFAULT_CENTER);
   const [view, setView] = useState<'map' | 'list'>('map');
   const importInputRef = useRef<HTMLInputElement>(null);
+  const [bounds, setBounds] = useState<Bounds | null>(null);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [discoveryStatus, setDiscoveryStatus] = useState<DiscoveryStatus>({ kind: 'idle' });
+  const discoveryAbort = useRef<AbortController | null>(null);
 
   const current = trips.currentTrip;
   const selectedPlace =
@@ -55,6 +65,59 @@ export default function AppShell() {
     });
     setCenter([result.lat, result.lng]);
     setSelectedId(id);
+  }
+
+  function discoveryErrorMessage(err: unknown): string {
+    const msg = err instanceof Error ? err.message : '';
+    if (/\b(429|504)\b|timeout/i.test(msg)) {
+      return 'Too busy right now — try again in a moment.';
+    }
+    return 'Couldn’t load suggestions — check your connection.';
+  }
+
+  function handleDiscoverySearch(typeId: string) {
+    if (!bounds) return;
+    if (!isBboxSearchable(bounds)) {
+      setSuggestions([]);
+      setDiscoveryStatus({ kind: 'too-large' });
+      return;
+    }
+    discoveryAbort.current?.abort();
+    const controller = new AbortController();
+    discoveryAbort.current = controller;
+    setDiscoveryStatus({ kind: 'loading' });
+    searchArea(bounds, typeId, controller.signal)
+      .then((results) => {
+        setSuggestions(results);
+        if (results.length === 0) {
+          const label = getDiscoveryType(typeId)?.label ?? 'places';
+          setDiscoveryStatus({ kind: 'empty', typeLabel: label });
+        } else {
+          setDiscoveryStatus({ kind: 'results', count: results.length });
+        }
+      })
+      .catch((err) => {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        setSuggestions([]);
+        setDiscoveryStatus({ kind: 'error', message: discoveryErrorMessage(err) });
+      });
+  }
+
+  function handleAddSuggestion(s: Suggestion) {
+    const id = trips.addPlace({
+      name: s.name,
+      lat: s.lat,
+      lng: s.lng,
+      category: s.category,
+      dayId: null,
+    });
+    setSuggestions((prev) => prev.filter((x) => x.id !== s.id));
+    setSelectedId(id);
+  }
+
+  function clearDiscovery() {
+    setSuggestions([]);
+    setDiscoveryStatus({ kind: 'idle' });
   }
 
   function handleExport() {
@@ -123,6 +186,7 @@ export default function AppShell() {
           onChange={(e) => {
             trips.selectTrip(e.target.value);
             setSelectedId(null);
+            clearDiscovery();
           }}
           className="rounded border border-gray-300 px-2 py-1 text-sm"
         >
@@ -198,13 +262,19 @@ export default function AppShell() {
         {/* Sidebar */}
         <aside
           className={`${
-            view === 'list' ? 'block' : 'hidden'
-          } w-full sm:block sm:w-80 sm:shrink-0 border-r border-gray-200`}
+            view === 'list' ? 'flex' : 'hidden'
+          } w-full flex-col border-r border-gray-200 sm:flex sm:w-80 sm:shrink-0`}
         >
-          <div className="border-b border-gray-200 p-2">
+          <div className="space-y-2 border-b border-gray-200 p-2">
             <SearchBox onPick={handlePick} />
+            <DiscoveryPanel
+              status={discoveryStatus}
+              hasSuggestions={suggestions.length > 0}
+              onSearch={handleDiscoverySearch}
+              onClear={clearDiscovery}
+            />
           </div>
-          <div className="h-[calc(100%-3.25rem)]">
+          <div className="min-h-0 flex-1">
             <Sidebar
               trip={current}
               selectedId={selectedId}
@@ -229,10 +299,13 @@ export default function AppShell() {
         <main className={`${view === 'map' ? 'block' : 'hidden'} flex-1 sm:block`}>
           <MapView
             places={current.places}
+            suggestions={suggestions}
             selectedId={selectedId}
             center={center}
             onAddPlace={handleAddPlace}
             onSelectPlace={setSelectedId}
+            onAddSuggestion={handleAddSuggestion}
+            onBoundsChange={setBounds}
           />
         </main>
 
