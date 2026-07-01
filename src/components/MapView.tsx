@@ -107,6 +107,8 @@ export default function MapView({
     map.on('moveend', () => boundsRef.current(toBounds(map)));
 
     map.on('click', (e) => {
+      const target = e.originalEvent.target as HTMLElement | null;
+      if (target?.closest('.maplibregl-marker')) return;
       const features = map.queryRenderedFeatures(e.point) as unknown as QueriedFeature[];
       const poi = pickPoi(features, e.lngLat.lat, e.lngLat.lng);
       if (!poi) {
