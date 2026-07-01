@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import type { Category, GeocodeResult } from '../types';
 import type { Suggestion } from '../services/overpass';
 import { searchArea } from '../services/overpass';
+import type { IdentifiedPoi } from '../lib/pickPoi';
 import type { Bounds } from '../lib/bbox';
 import { isBboxSearchable } from '../lib/bbox';
 import { getDiscoveryType } from '../config/discoveryTypes';
@@ -112,6 +113,17 @@ export default function AppShell() {
       dayId: null,
     });
     setSuggestions((prev) => prev.filter((x) => x.id !== s.id));
+    setSelectedId(id);
+  }
+
+  function handleIdentifyAdd(poi: IdentifiedPoi) {
+    const id = trips.addPlace({
+      name: poi.name,
+      lat: poi.lat,
+      lng: poi.lng,
+      category: poi.category,
+      dayId: null,
+    });
     setSelectedId(id);
   }
 
@@ -305,6 +317,7 @@ export default function AppShell() {
             onAddPlace={handleAddPlace}
             onSelectPlace={setSelectedId}
             onAddSuggestion={handleAddSuggestion}
+            onIdentifyAdd={handleIdentifyAdd}
             onBoundsChange={setBounds}
           />
         </main>
