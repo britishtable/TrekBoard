@@ -1,17 +1,29 @@
 import { CATEGORIES, categoryColor, categoryLabel } from './categories';
 
-test('defines exactly the five v1 categories', () => {
+test('defines the nine categories in display order', () => {
   expect(CATEGORIES.map((c) => c.id)).toEqual([
     'food',
+    'nightlife',
     'sights',
+    'entertainment',
+    'outdoors',
+    'shopping',
     'lodging',
     'transport',
     'other',
   ]);
 });
 
-test('categoryColor returns a hex color for a known category', () => {
-  expect(categoryColor('food')).toMatch(/^#[0-9a-f]{6}$/i);
+test('every category has a hex color and a non-empty label', () => {
+  for (const c of CATEGORIES) {
+    expect(c.color).toMatch(/^#[0-9a-f]{6}$/i);
+    expect(c.label.length).toBeGreaterThan(0);
+  }
+});
+
+test('categoryColor and categoryLabel resolve a new category', () => {
+  expect(categoryColor('nightlife')).toBe('#ae3ec9');
+  expect(categoryLabel('nightlife')).toBe('Nightlife');
 });
 
 test('categoryLabel returns the human label', () => {

@@ -8,7 +8,11 @@ export interface CategoryMeta {
 
 export const CATEGORIES: CategoryMeta[] = [
   { id: 'food', label: 'Food & Drink', color: '#e8590c' },
+  { id: 'nightlife', label: 'Nightlife', color: '#ae3ec9' },
   { id: 'sights', label: 'Sights', color: '#1971c2' },
+  { id: 'entertainment', label: 'Entertainment', color: '#e64980' },
+  { id: 'outdoors', label: 'Outdoors', color: '#74b816' },
+  { id: 'shopping', label: 'Shopping', color: '#f59f00' },
   { id: 'lodging', label: 'Lodging', color: '#6741d9' },
   { id: 'transport', label: 'Transport', color: '#2f9e44' },
   { id: 'other', label: 'Other', color: '#868e96' },

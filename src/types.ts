@@ -1,4 +1,13 @@
-export type Category = 'food' | 'sights' | 'lodging' | 'transport' | 'other';
+export type Category =
+  | 'food'
+  | 'nightlife'
+  | 'sights'
+  | 'entertainment'
+  | 'outdoors'
+  | 'shopping'
+  | 'lodging'
+  | 'transport'
+  | 'other';
 
 export interface Day {
   id: string;
