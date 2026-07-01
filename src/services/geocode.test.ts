@@ -30,3 +30,9 @@ test('returns [] on network error', async () => {
   vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('offline'));
   expect(await searchPlaces('louvre')).toEqual([]);
 });
+
+test('rethrows AbortError instead of swallowing it', async () => {
+  const abortError = new DOMException('The operation was aborted.', 'AbortError');
+  vi.spyOn(globalThis, 'fetch').mockRejectedValue(abortError);
+  await expect(searchPlaces('louvre')).rejects.toBe(abortError);
+});

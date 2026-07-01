@@ -24,6 +24,7 @@ export async function searchPlaces(
   try {
     const res = await fetch(url, {
       signal,
+      referrerPolicy: 'origin',
       headers: { Accept: 'application/json' },
     });
     if (!res.ok) return [];
