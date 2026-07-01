@@ -24,6 +24,11 @@ more on that under [How your data is stored](#how-your-data-is-stored).
 Plan on the map by clicking anywhere to drop a pin, or search for a place by name (say,
 "Eiffel Tower") and drop a located pin without hunting for it.
 
+The map knows what's on it, too. Click a labeled place — a cafe, a museum, a hotel — and
+TrekBoard adds it with its name and category already filled in. Or explore an area: pick a
+type, like cafes, museums, viewpoints, or hotels, and hit "Search this area" to see
+everything of that kind nearby, then add the ones you want with a tap.
+
 Give each place a category — Food, Sights, Lodging, Transport, or Other. Every category
 has its own colored marker, and you can filter the map and list down to just the ones you
 care about.
