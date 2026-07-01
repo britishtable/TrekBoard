@@ -14,6 +14,7 @@ export interface Place {
   category: Category;
   dayId: string | null; // null = unassigned
   note?: string;
+  startTime?: string; // 24h "HH:MM"
 }
 
 export interface Trip {

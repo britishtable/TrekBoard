@@ -76,6 +76,16 @@ export default function PlaceDetailsPanel({
       </label>
 
       <label className="text-xs font-medium text-gray-600">
+        Start time
+        <input
+          type="time"
+          value={place.startTime ?? ''}
+          onChange={(e) => onChange({ startTime: e.target.value || undefined })}
+          className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+        />
+      </label>
+
+      <label className="text-xs font-medium text-gray-600">
         Note
         <textarea
           value={place.note ?? ''}
