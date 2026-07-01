@@ -32,12 +32,12 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
         runtimeCaching: [
           {
-            urlPattern: ({ url }) => url.hostname.endsWith('tile.openstreetmap.org'),
-            handler: 'CacheFirst',
+            urlPattern: ({ url }) => url.hostname.endsWith('openfreemap.org'),
+            handler: 'StaleWhileRevalidate',
             options: {
-              cacheName: 'osm-tiles',
+              cacheName: 'openfreemap',
               expiration: {
-                maxEntries: 1000,
+                maxEntries: 2000,
                 maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
               },
               cacheableResponse: { statuses: [0, 200] },
