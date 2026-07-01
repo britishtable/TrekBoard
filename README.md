@@ -105,7 +105,7 @@ npm run preview   # serve the production build locally
 ## Tech stack
 
 - React, TypeScript, and Vite
-- Leaflet with OpenStreetMap for the map (free, no API key)
+- MapLibre GL with OpenFreeMap for the map (free, no API key)
 - Nominatim for place search (free geocoding, no key)
 - Tailwind CSS for styling
 - vite-plugin-pwa (Workbox) for offline support and installability
