@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { Category, GeocodeResult } from '../types';
 import { createLocalTripStore } from '../storage/localTripStore';
 import { useTrips } from '../state/useTrips';
@@ -18,6 +18,7 @@ export default function AppShell() {
   const [dayFilter, setDayFilter] = useState<string | null>(null);
   const [center, setCenter] = useState<[number, number]>(DEFAULT_CENTER);
   const [view, setView] = useState<'map' | 'list'>('map');
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   const current = trips.currentTrip;
   const selectedPlace =
@@ -56,18 +57,57 @@ export default function AppShell() {
     setSelectedId(id);
   }
 
+  function handleExport() {
+    const json = trips.exportTrips();
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `trekboard-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow re-importing the same file later
+    if (!file) return;
+    try {
+      trips.importTrips(await file.text());
+      setSelectedId(null);
+    } catch {
+      window.alert("Couldn't import: that file isn't a valid TrekBoard backup.");
+    }
+  }
+
   if (!current) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
         <h1 className="text-2xl font-bold text-gray-800">TrekBoard</h1>
         <p className="text-gray-500">Create your first trip to start planning.</p>
-        <button
-          type="button"
-          onClick={() => trips.newTrip('My Trip')}
-          className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          New trip
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => trips.newTrip('My Trip')}
+            className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            New trip
+          </button>
+          <button
+            type="button"
+            onClick={() => importInputRef.current?.click()}
+            className="rounded border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+          >
+            Import backup
+          </button>
+        </div>
+        <input
+          ref={importInputRef}
+          type="file"
+          accept="application/json"
+          className="hidden"
+          onChange={handleImportFile}
+        />
       </div>
     );
   }
@@ -121,6 +161,27 @@ export default function AppShell() {
         >
           Delete
         </button>
+        <button
+          type="button"
+          onClick={handleExport}
+          className="rounded border border-gray-300 px-2 py-1 text-sm hover:bg-gray-100"
+        >
+          Export
+        </button>
+        <button
+          type="button"
+          onClick={() => importInputRef.current?.click()}
+          className="rounded border border-gray-300 px-2 py-1 text-sm hover:bg-gray-100"
+        >
+          Import
+        </button>
+        <input
+          ref={importInputRef}
+          type="file"
+          accept="application/json"
+          className="hidden"
+          onChange={handleImportFile}
+        />
         <div className="ml-auto sm:hidden">
           <button
             type="button"

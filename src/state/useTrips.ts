@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Place, Trip } from '../types';
 import type { TripStore } from '../storage/TripStore';
 import * as ops from './tripOps';
+import { serializeBackup, parseBackup } from './backup';
 
 export function useTrips(store: TripStore) {
   const [trips, setTrips] = useState<Trip[]>(() => store.getTrips());
@@ -77,6 +78,14 @@ export function useTrips(store: TripStore) {
     [mutateCurrent],
   );
 
+  const exportTrips = useCallback((): string => serializeBackup(trips), [trips]);
+
+  const importTrips = useCallback((json: string): void => {
+    const added = parseBackup(json);
+    setTrips((prev) => [...prev, ...added]);
+    if (added[0]) setCurrentTripId(added[0].id);
+  }, []);
+
   return {
     trips,
     currentTrip,
@@ -89,5 +98,7 @@ export function useTrips(store: TripStore) {
     updatePlace,
     removePlace,
     addDay,
+    exportTrips,
+    importTrips,
   };
 }

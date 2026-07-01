@@ -2,6 +2,8 @@ import { act, renderHook } from '@testing-library/react';
 import { useTrips } from './useTrips';
 import { createLocalTripStore } from '../storage/localTripStore';
 import type { Place } from '../types';
+import { serializeBackup } from './backup';
+import { addPlace, createPlace, createTrip } from './tripOps';
 
 function memoryStore() {
   const map = new Map<string, string>();
@@ -29,6 +31,21 @@ test('newTrip creates and selects a trip', () => {
   act(() => result.current.newTrip('Paris'));
   expect(result.current.trips).toHaveLength(1);
   expect(result.current.currentTrip?.name).toBe('Paris');
+});
+
+test('importTrips adds trips and selects the first imported', () => {
+  const { result } = renderHook(() => useTrips(memoryStore()));
+  const imported = addPlace(
+    createTrip('Rome'),
+    createPlace({ name: 'Colosseum', lat: 41.89, lng: 12.49, category: 'sights', dayId: null }),
+  );
+  const json = serializeBackup([imported]);
+
+  act(() => result.current.importTrips(json));
+
+  expect(result.current.trips).toHaveLength(1);
+  expect(result.current.currentTrip?.name).toBe('Rome');
+  expect(result.current.currentTrip?.places).toHaveLength(1);
 });
 
 test('addPlace adds to the current trip', () => {
