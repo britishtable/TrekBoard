@@ -10,8 +10,6 @@ the plan (today view, GPS) follows.
 
 ## Up next
 
-- [ ] **Lodging "things nearby"** — select a lodging place and discover what's around it.
-  Small; builds on the existing discovery feature.
 - [ ] **Hiking trailheads** — trailheads are usually mapped as POIs, so add a trailhead
   discovery type using the Outdoors category. The easy first step, before full trail
   support.
@@ -63,4 +61,6 @@ Photos are core to this vision, which makes the storage migration a prerequisite
 - Nearby suggestions ("Search this area") via Overpass, with endpoint fallback and caching
 - Vector maps (MapLibre GL + OpenFreeMap) and click-to-identify
 - Nine categories (added Nightlife, Entertainment, Outdoors, Shopping)
+- "What's nearby" from any saved place: fixed walking-radius search with distance-tagged
+  results
 - PWA: installable, offline app + data, cached map tiles for viewed areas
