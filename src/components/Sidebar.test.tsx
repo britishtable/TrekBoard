@@ -1,13 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import Sidebar from './Sidebar';
-import { addDay, addPlace, createTrip } from '../state/tripOps';
+import { addDay, addPlace, createPlace, createTrip } from '../state/tripOps';
 import type { Category } from '../types';
 
 function tripWithPlaces() {
   let t = addDay(createTrip('Paris')); // Day 1
   const dayId = t.days[0].id;
-  t = addPlace(t, { name: 'Louvre', lat: 1, lng: 1, category: 'sights', dayId });
-  t = addPlace(t, { name: 'Cafe', lat: 2, lng: 2, category: 'food', dayId: null });
+  t = addPlace(t, createPlace({ name: 'Louvre', lat: 1, lng: 1, category: 'sights', dayId }));
+  t = addPlace(t, createPlace({ name: 'Cafe', lat: 2, lng: 2, category: 'food', dayId: null }));
   return t;
 }
 
