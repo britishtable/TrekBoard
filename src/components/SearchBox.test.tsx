@@ -19,3 +19,24 @@ test('shows results and calls onPick when a result is clicked', async () => {
 
   expect(onPick).toHaveBeenCalledWith(results[0]);
 });
+
+test('shows an error message when search fails', async () => {
+  const user = userEvent.setup();
+  render(
+    <SearchBox
+      onPick={vi.fn()}
+      search={async () => {
+        throw new Error('offline');
+      }}
+    />,
+  );
+  await user.type(screen.getByPlaceholderText(/search/i), 'louvre');
+  expect(await screen.findByText(/couldn.t search/i)).toBeInTheDocument();
+});
+
+test('shows "No results found" for an empty result set', async () => {
+  const user = userEvent.setup();
+  render(<SearchBox onPick={vi.fn()} search={async () => []} />);
+  await user.type(screen.getByPlaceholderText(/search/i), 'zzzzz');
+  expect(await screen.findByText(/no results found/i)).toBeInTheDocument();
+});

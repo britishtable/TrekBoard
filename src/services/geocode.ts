@@ -21,21 +21,18 @@ export async function searchPlaces(
 
   const url = `${ENDPOINT}?format=jsonv2&limit=5&q=${encodeURIComponent(q)}`;
 
-  try {
-    const res = await fetch(url, {
-      signal,
-      referrerPolicy: 'origin',
-      headers: { Accept: 'application/json' },
-    });
-    if (!res.ok) return [];
-    const rows = (await res.json()) as NominatimRow[];
-    return rows.map((r) => ({
-      name: r.display_name,
-      lat: Number(r.lat),
-      lng: Number(r.lon),
-    }));
-  } catch (err) {
-    if (err instanceof DOMException && err.name === 'AbortError') throw err;
-    return [];
-  }
+  // Network failures and AbortError propagate to the caller by design.
+  const res = await fetch(url, {
+    signal,
+    referrerPolicy: 'origin',
+    headers: { Accept: 'application/json' },
+  });
+  if (!res.ok) throw new Error(`Geocoding failed: ${res.status}`);
+
+  const rows = (await res.json()) as NominatimRow[];
+  return rows.map((r) => ({
+    name: r.display_name,
+    lat: Number(r.lat),
+    lng: Number(r.lon),
+  }));
 }

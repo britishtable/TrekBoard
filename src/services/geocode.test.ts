@@ -21,14 +21,14 @@ test('maps Nominatim results to GeocodeResult', async () => {
   expect(results).toEqual([{ name: 'Louvre, Paris', lat: 48.8606, lng: 2.3376 }]);
 });
 
-test('returns [] on non-ok response', async () => {
-  vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: false } as Response);
-  expect(await searchPlaces('louvre')).toEqual([]);
+test('throws on non-ok response', async () => {
+  vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: false, status: 500 } as Response);
+  await expect(searchPlaces('louvre')).rejects.toThrow(/500/);
 });
 
-test('returns [] on network error', async () => {
+test('propagates network errors to the caller', async () => {
   vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('offline'));
-  expect(await searchPlaces('louvre')).toEqual([]);
+  await expect(searchPlaces('louvre')).rejects.toThrow('offline');
 });
 
 test('rethrows AbortError instead of swallowing it', async () => {

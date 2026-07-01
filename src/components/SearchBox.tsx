@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { searchPlaces, type GeocodeResult } from '../services/geocode';
 import { useDebouncedValue } from '../lib/debounce';
 
+type Status = 'idle' | 'loading' | 'error';
+
 interface SearchBoxProps {
   onPick(result: GeocodeResult): void;
   search?: (q: string, signal?: AbortSignal) => Promise<GeocodeResult[]>;
@@ -13,22 +15,26 @@ export default function SearchBox({
 }: SearchBoxProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<GeocodeResult[]>([]);
-  const [error, setError] = useState(false);
+  const [status, setStatus] = useState<Status>('idle');
   const debounced = useDebouncedValue(query, 500);
 
   useEffect(() => {
     if (!debounced.trim()) {
       setResults([]);
-      setError(false);
+      setStatus('idle');
       return;
     }
     const controller = new AbortController();
-    setError(false);
+    setStatus('loading');
     search(debounced, controller.signal)
-      .then((rows) => setResults(rows))
+      .then((rows) => {
+        setResults(rows);
+        setStatus('idle');
+      })
       .catch((err) => {
         if (err instanceof DOMException && err.name === 'AbortError') return;
-        setError(true);
+        setResults([]);
+        setStatus('error');
       });
     return () => controller.abort();
   }, [debounced, search]);
@@ -37,7 +43,11 @@ export default function SearchBox({
     onPick(result);
     setQuery('');
     setResults([]);
+    setStatus('idle');
   }
+
+  const showEmpty =
+    status === 'idle' && debounced.trim() !== '' && results.length === 0;
 
   return (
     <div className="relative">
@@ -48,10 +58,16 @@ export default function SearchBox({
         placeholder="Search for a place…"
         className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
       />
-      {error && (
+      {status === 'loading' && (
+        <p className="mt-1 text-xs text-gray-500">Searching…</p>
+      )}
+      {status === 'error' && (
         <p className="mt-1 text-xs text-red-600">
-          Couldn't search — check your connection.
+          Couldn’t search — check your connection.
         </p>
+      )}
+      {showEmpty && (
+        <p className="mt-1 text-xs text-gray-500">No results found.</p>
       )}
       {results.length > 0 && (
         <ul className="absolute z-[1000] mt-1 max-h-60 w-full overflow-auto rounded border border-gray-200 bg-white shadow">
