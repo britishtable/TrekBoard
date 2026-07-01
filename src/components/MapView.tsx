@@ -6,6 +6,7 @@ import type { Suggestion } from '../services/overpass';
 import type { Bounds } from '../lib/bbox';
 import { categoryColor, categoryLabel } from '../config/categories';
 import { pickPoi, type IdentifiedPoi, type QueriedFeature } from '../lib/pickPoi';
+import { haversineKm, formatDistance } from '../lib/distance';
 
 // 'liberty' renders POI icons and exposes the `poi` source-layer, which
 // click-to-identify (pickPoi) queries. 'positron' has no POI layers.
@@ -16,6 +17,8 @@ interface MapViewProps {
   suggestions: Suggestion[];
   selectedId: string | null;
   center: [number, number]; // [lat, lng]
+  anchor?: { lat: number; lng: number } | null;
+  frameBounds?: Bounds | null;
   onAddPlace(lat: number, lng: number): void;
   onSelectPlace(id: string): void;
   onAddSuggestion(s: Suggestion): void;
@@ -66,6 +69,8 @@ export default function MapView({
   suggestions,
   selectedId,
   center,
+  anchor,
+  frameBounds,
   onAddPlace,
   onSelectPlace,
   onAddSuggestion,
@@ -141,6 +146,18 @@ export default function MapView({
     mapRef.current?.setCenter([center[1], center[0]]);
   }, [center]);
 
+  // Frame a nearby-search box when one is set.
+  useEffect(() => {
+    if (!frameBounds) return;
+    mapRef.current?.fitBounds(
+      [
+        [frameBounds.west, frameBounds.south],
+        [frameBounds.east, frameBounds.north],
+      ],
+      { padding: 40 },
+    );
+  }, [frameBounds]);
+
   // Saved place markers.
   useEffect(() => {
     const map = mapRef.current;
@@ -168,18 +185,25 @@ export default function MapView({
       const container = document.createElement('div');
       container.className = 'text-sm';
       const title = document.createElement('div');
-      title.className = 'mb-1 font-medium';
+      title.className = anchor ? 'font-medium' : 'mb-1 font-medium';
       title.textContent = s.name;
+      container.append(title);
+      if (anchor) {
+        const dist = document.createElement('div');
+        dist.className = 'mb-1 text-xs text-gray-500';
+        dist.textContent = formatDistance(haversineKm(anchor, s));
+        container.append(dist);
+      }
       const btn = addButton('Add to trip');
       btn.addEventListener('click', () => addSuggestionRef.current(s));
-      container.append(title, btn);
+      container.append(btn);
       const popup = new maplibregl.Popup({ offset: 12 }).setDOMContent(container);
       return new maplibregl.Marker({ element: el })
         .setLngLat([s.lng, s.lat])
         .setPopup(popup)
         .addTo(map);
     });
-  }, [suggestions]);
+  }, [suggestions, anchor]);
 
   return <div ref={hostRef} className="maplibre-host h-full w-full" />;
 }
