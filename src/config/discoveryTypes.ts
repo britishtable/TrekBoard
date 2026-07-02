@@ -25,6 +25,12 @@ export const DISCOVERY_TYPES: DiscoveryType[] = [
   { id: 'park', label: 'Parks', filters: [{ k: 'leisure', v: 'park' }], category: 'outdoors' },
   { id: 'garden', label: 'Gardens', filters: [{ k: 'leisure', v: 'garden' }], category: 'outdoors' },
   { id: 'beach', label: 'Beaches', filters: [{ k: 'natural', v: 'beach' }], category: 'outdoors' },
+  { id: 'hiking', label: 'Hiking', filters: [
+      { k: 'highway', v: 'trailhead' },
+      { k: 'information', v: 'guidepost' },
+      { k: 'natural', v: 'peak' },
+      { k: 'leisure', v: 'nature_reserve' },
+    ], category: 'outdoors' },
   { id: 'shops', label: 'Shops & markets', filters: [{ k: 'shop', v: 'mall' }, { k: 'shop', v: 'supermarket' }, { k: 'shop', v: 'department_store' }, { k: 'amenity', v: 'marketplace' }], category: 'shopping' },
   { id: 'hotel', label: 'Hotels', filters: [{ k: 'tourism', v: 'hotel' }, { k: 'tourism', v: 'guest_house' }], category: 'lodging' },
 ];

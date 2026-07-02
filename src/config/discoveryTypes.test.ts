@@ -34,3 +34,17 @@ test('remaps and adds types for the new categories', () => {
 test('getDiscoveryType returns undefined for unknown ids', () => {
   expect(getDiscoveryType('nope')).toBeUndefined();
 });
+
+test('hiking type combines trailhead, guidepost, peak, and nature_reserve filters', () => {
+  const hiking = getDiscoveryType('hiking');
+  expect(hiking?.category).toBe('outdoors');
+  const pairs = hiking?.filters.map((f) => `${f.k}=${f.v}`) ?? [];
+  expect(pairs).toEqual(
+    expect.arrayContaining([
+      'highway=trailhead',
+      'information=guidepost',
+      'natural=peak',
+      'leisure=nature_reserve',
+    ]),
+  );
+});
