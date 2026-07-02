@@ -20,7 +20,7 @@ export function pickPoi(
   fallbackLng: number,
 ): IdentifiedPoi | null {
   for (const f of features) {
-    if (f.sourceLayer !== 'poi') continue;
+    if (f.sourceLayer !== 'poi' && f.sourceLayer !== 'mountain_peak') continue;
     const name = f.properties?.name;
     if (typeof name !== 'string' || name === '') continue;
 

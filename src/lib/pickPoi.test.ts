@@ -38,3 +38,26 @@ test('ignores non-poi layers even if named', () => {
   ];
   expect(pickPoi(features, 0, 0)).toBeNull();
 });
+
+test('picks a named mountain_peak feature as outdoors', () => {
+  const features: QueriedFeature[] = [
+    {
+      sourceLayer: 'mountain_peak',
+      properties: { name: "Lion's Head", class: 'peak' },
+      geometry: { type: 'Point', coordinates: [18.389, -33.935] },
+    },
+  ];
+  expect(pickPoi(features, 0, 0)).toEqual({
+    name: "Lion's Head",
+    category: 'outdoors',
+    lat: -33.935,
+    lng: 18.389,
+  });
+});
+
+test('skips an unnamed mountain_peak feature', () => {
+  const features: QueriedFeature[] = [
+    { sourceLayer: 'mountain_peak', properties: { class: 'peak' } },
+  ];
+  expect(pickPoi(features, 0, 0)).toBeNull();
+});
