@@ -7,6 +7,7 @@ const NIGHTLIFE = new Set(['bar', 'pub', 'nightclub', 'biergarten', 'wine']);
 const ENTERTAINMENT = new Set(['cinema', 'theatre', 'arts_centre', 'gallery', 'casino']);
 const OUTDOORS = new Set([
   'park', 'garden', 'viewpoint', 'beach', 'nature_reserve', 'picnic_site',
+  'peak', 'volcano', 'saddle',
 ]);
 const SHOPPING = new Set([
   'mall', 'department_store', 'supermarket', 'convenience', 'marketplace',

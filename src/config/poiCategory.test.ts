@@ -40,3 +40,9 @@ test('unknown or empty classes map to other', () => {
   expect(poiCategory('bank')).toBe('other');
   expect(poiCategory('')).toBe('other');
 });
+
+test('mountain peak classes map to outdoors', () => {
+  for (const c of ['peak', 'volcano', 'saddle']) {
+    expect(poiCategory(c)).toBe('outdoors');
+  }
+});
