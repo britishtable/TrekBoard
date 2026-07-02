@@ -103,7 +103,43 @@ export default function MapView({
       zoom: 13,
     });
 
-    map.on('load', () => boundsRef.current(toBounds(map)));
+    map.on('load', () => {
+      boundsRef.current(toBounds(map));
+      if (!map.getLayer('trekboard-peaks')) {
+        map.addLayer({
+          id: 'trekboard-peaks',
+          type: 'circle',
+          source: 'openmaptiles',
+          'source-layer': 'mountain_peak',
+          minzoom: 11,
+          paint: {
+            'circle-radius': 4,
+            'circle-color': '#15803d',
+            'circle-stroke-width': 1.5,
+            'circle-stroke-color': 'rgba(255,255,255,0.9)',
+          },
+        });
+        map.addLayer({
+          id: 'trekboard-peaks-label',
+          type: 'symbol',
+          source: 'openmaptiles',
+          'source-layer': 'mountain_peak',
+          minzoom: 12,
+          layout: {
+            'text-field': ['get', 'name'],
+            'text-size': 11,
+            'text-offset': [0, 0.9],
+            'text-anchor': 'top',
+            'text-optional': true,
+          },
+          paint: {
+            'text-color': '#166534',
+            'text-halo-color': 'rgba(255,255,255,0.9)',
+            'text-halo-width': 1.2,
+          },
+        });
+      }
+    });
     map.on('moveend', () => boundsRef.current(toBounds(map)));
 
     map.on('click', (e) => {
