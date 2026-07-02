@@ -26,8 +26,10 @@ Plan on the map by clicking anywhere to drop a pin, or search for a place by nam
 
 The map knows what's on it, too. Click a labeled place — a cafe, a museum, a hotel — and
 TrekBoard adds it with its name and category already filled in. Or explore an area: pick a
-type, like cafes, museums, viewpoints, or hotels, and hit "Search this area" to see
-everything of that kind nearby, then add the ones you want with a tap.
+type, like cafes, museums, viewpoints, hotels, or hiking spots (trailheads, peaks, and
+nature reserves), and hit "Search this area" to see everything of that kind nearby, then
+add the ones you want with a tap. Mountain peaks are drawn right on the map, too — tap
+one to add it to your trip.
 
 Saved places can anchor a search too. Open any place you've added — your hotel, say —
 and hit "Search nearby" in its details panel to see what's within about a ten-minute
