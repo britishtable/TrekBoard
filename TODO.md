@@ -10,9 +10,11 @@ the plan (today view, GPS) follows.
 
 ## Up next
 
-- [ ] **Hiking trailheads** — trailheads are usually mapped as POIs, so add a trailhead
-  discovery type using the Outdoors category. The easy first step, before full trail
-  support.
+- [ ] **Verify peak tap in a normal browser** — the Hiking cycle's map peaks (green dots
+  + labels) and tap-to-add were not visually confirmed in the headless build sandbox
+  (querySourceFeatures came back empty at Table Mountain despite tiles loading 200,
+  suspected sandbox vector-tile worker limitation, not a code defect). Quick manual check
+  on a real browser to close it out.
 
 ## Trip recording arc
 
@@ -63,4 +65,6 @@ Photos are core to this vision, which makes the storage migration a prerequisite
 - Nine categories (added Nightlife, Entertainment, Outdoors, Shopping)
 - "What's nearby" from any saved place: fixed walking-radius search with distance-tagged
   results
+- Hiking discovery type (trailheads, guideposts, peaks, nature reserves) plus mountain
+  peaks rendered on the map and tappable to add
 - PWA: installable, offline app + data, cached map tiles for viewed areas
