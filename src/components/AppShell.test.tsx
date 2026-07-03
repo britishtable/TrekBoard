@@ -63,3 +63,12 @@ test('shows empty state and can create the first trip', async () => {
   // a prompt-based flow is avoided; the button creates a default-named trip
   expect(screen.getByText(/my trip/i)).toBeInTheDocument();
 });
+
+test('the Today button opens the Today view', async () => {
+  const user = userEvent.setup();
+  window.localStorage.clear();
+  render(<AppShell />);
+  await user.click(await screen.findByRole('button', { name: /new trip/i }));
+  await user.click(screen.getByRole('button', { name: /^today$/i }));
+  expect(await screen.findByText(/no stops planned for this day/i)).toBeInTheDocument();
+});

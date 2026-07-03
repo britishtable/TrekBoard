@@ -14,6 +14,8 @@ import SearchBox from './SearchBox';
 import Sidebar from './Sidebar';
 import PlaceDetailsPanel from './PlaceDetailsPanel';
 import DiscoveryPanel, { type DiscoveryStatus } from './DiscoveryPanel';
+import TodayView from './TodayView';
+import { pickCurrentDay, todayIso } from '../lib/currentDay';
 
 const DEFAULT_CENTER: [number, number] = [48.8566, 2.3522]; // Paris
 const NEARBY_RADIUS_M = 800; // roughly a 10-minute walk
@@ -27,7 +29,8 @@ export default function AppShell() {
   const [categoryFilter, setCategoryFilter] = useState<Set<Category>>(new Set());
   const [dayFilter, setDayFilter] = useState<string | null>(null);
   const [center, setCenter] = useState<[number, number]>(DEFAULT_CENTER);
-  const [view, setView] = useState<'map' | 'list'>('map');
+  const [view, setView] = useState<'map' | 'list' | 'today'>('map');
+  const [todayDayId, setTodayDayId] = useState<string | null>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
   const [bounds, setBounds] = useState<Bounds | null>(null);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
@@ -161,6 +164,12 @@ export default function AppShell() {
     setFrameBounds(null);
   }
 
+  function openToday() {
+    if (!current) return;
+    setTodayDayId(pickCurrentDay(current.days, todayIso()));
+    setView('today');
+  }
+
   async function handleExport() {
     const blob = await trips.exportBackup();
     const url = URL.createObjectURL(blob);
@@ -286,6 +295,13 @@ export default function AppShell() {
           className="hidden"
           onChange={handleImportFile}
         />
+        <button
+          type="button"
+          onClick={openToday}
+          className="rounded border border-gray-300 px-2 py-1 text-sm hover:bg-gray-100"
+        >
+          Today
+        </button>
         <div className="ml-auto sm:hidden">
           <button
             type="button"
@@ -299,59 +315,76 @@ export default function AppShell() {
 
       {/* Body */}
       <div className="relative flex min-h-0 flex-1">
-        {/* Sidebar */}
-        <aside
-          className={`${
-            view === 'list' ? 'flex' : 'hidden'
-          } w-full flex-col border-r border-gray-200 sm:flex sm:w-80 sm:shrink-0`}
-        >
-          <div className="space-y-2 border-b border-gray-200 p-2">
-            <SearchBox onPick={handlePick} />
-            <DiscoveryPanel
-              status={discoveryStatus}
-              hasSuggestions={suggestions.length > 0}
-              onSearch={handleDiscoverySearch}
-              onClear={clearDiscovery}
-            />
-          </div>
-          <div className="min-h-0 flex-1">
-            <Sidebar
-              trip={current}
-              selectedId={selectedId}
-              categoryFilter={categoryFilter}
-              dayFilter={dayFilter}
-              onSelectPlace={(id) => {
-                setSelectedId(id);
-                const p = current.places.find((x) => x.id === id);
-                if (p) setCenter([p.lat, p.lng]);
-                setView('map');
-              }}
-              onToggleCategory={toggleCategory}
-              onSetDayFilter={setDayFilter}
-              onAddDay={trips.addDay}
-              onMovePlace={trips.movePlace}
-              onSortDay={trips.sortDay}
-              onSetDayDate={trips.setDayDate}
-            />
-          </div>
-        </aside>
-
-        {/* Map */}
-        <main className={`${view === 'map' ? 'block' : 'hidden'} flex-1 sm:block`}>
-          <MapView
-            places={current.places}
-            suggestions={suggestions}
-            selectedId={selectedId}
-            center={center}
-            anchor={nearbyAnchor}
-            frameBounds={frameBounds}
-            onAddPlace={handleAddPlace}
-            onSelectPlace={setSelectedId}
-            onAddSuggestion={handleAddSuggestion}
-            onIdentifyAdd={handleIdentifyAdd}
-            onBoundsChange={setBounds}
+        {view === 'today' ? (
+          <TodayView
+            trip={current}
+            selectedDayId={todayDayId}
+            onSelectDay={setTodayDayId}
+            onToggleVisited={(id, visited) => trips.updatePlace(id, { visited })}
+            onSelectPlace={(id) => {
+              setSelectedId(id);
+              const p = current.places.find((x) => x.id === id);
+              if (p) setCenter([p.lat, p.lng]);
+              setView('map');
+            }}
           />
-        </main>
+        ) : (
+          <>
+            {/* Sidebar */}
+            <aside
+              className={`${
+                view === 'list' ? 'flex' : 'hidden'
+              } w-full flex-col border-r border-gray-200 sm:flex sm:w-80 sm:shrink-0`}
+            >
+              <div className="space-y-2 border-b border-gray-200 p-2">
+                <SearchBox onPick={handlePick} />
+                <DiscoveryPanel
+                  status={discoveryStatus}
+                  hasSuggestions={suggestions.length > 0}
+                  onSearch={handleDiscoverySearch}
+                  onClear={clearDiscovery}
+                />
+              </div>
+              <div className="min-h-0 flex-1">
+                <Sidebar
+                  trip={current}
+                  selectedId={selectedId}
+                  categoryFilter={categoryFilter}
+                  dayFilter={dayFilter}
+                  onSelectPlace={(id) => {
+                    setSelectedId(id);
+                    const p = current.places.find((x) => x.id === id);
+                    if (p) setCenter([p.lat, p.lng]);
+                    setView('map');
+                  }}
+                  onToggleCategory={toggleCategory}
+                  onSetDayFilter={setDayFilter}
+                  onAddDay={trips.addDay}
+                  onMovePlace={trips.movePlace}
+                  onSortDay={trips.sortDay}
+                  onSetDayDate={trips.setDayDate}
+                />
+              </div>
+            </aside>
+
+            {/* Map */}
+            <main className={`${view === 'map' ? 'block' : 'hidden'} flex-1 sm:block`}>
+              <MapView
+                places={current.places}
+                suggestions={suggestions}
+                selectedId={selectedId}
+                center={center}
+                anchor={nearbyAnchor}
+                frameBounds={frameBounds}
+                onAddPlace={handleAddPlace}
+                onSelectPlace={setSelectedId}
+                onAddSuggestion={handleAddSuggestion}
+                onIdentifyAdd={handleIdentifyAdd}
+                onBoundsChange={setBounds}
+              />
+            </main>
+          </>
+        )}
 
         {/* Details panel */}
         {selectedPlace && (
