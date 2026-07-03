@@ -14,6 +14,7 @@ interface DiscoveryPanelProps {
   hasSuggestions: boolean;
   onSearch(typeId: string): void;
   onClear(): void;
+  onSearchNearMe?(typeId: string): void;
 }
 
 function StatusText({ status }: { status: DiscoveryStatus }) {
@@ -38,6 +39,7 @@ export default function DiscoveryPanel({
   hasSuggestions,
   onSearch,
   onClear,
+  onSearchNearMe = () => {},
 }: DiscoveryPanelProps) {
   const [typeId, setTypeId] = useState(DISCOVERY_TYPES[0].id);
   const loading = status.kind === 'loading';
@@ -64,6 +66,14 @@ export default function DiscoveryPanel({
           className="whitespace-nowrap rounded bg-blue-600 px-2 py-1 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
         >
           Search this area
+        </button>
+        <button
+          type="button"
+          onClick={() => onSearchNearMe(typeId)}
+          disabled={loading}
+          className="whitespace-nowrap rounded border border-gray-300 px-2 py-1 text-sm hover:bg-gray-100 disabled:opacity-50"
+        >
+          Near me
         </button>
       </div>
       <div className="flex items-center justify-between">
