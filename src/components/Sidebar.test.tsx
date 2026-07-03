@@ -26,6 +26,7 @@ test('lists places grouped with an Unassigned group', () => {
       onAddDay={() => {}}
       onMovePlace={() => {}}
       onSortDay={() => {}}
+      onSetDayDate={() => {}}
     />,
   );
   expect(screen.getByText('Louvre')).toBeInTheDocument();
@@ -46,6 +47,7 @@ test('category filter hides non-matching places', () => {
       onAddDay={() => {}}
       onMovePlace={() => {}}
       onSortDay={() => {}}
+      onSetDayDate={() => {}}
     />,
   );
   expect(screen.getByText('Louvre')).toBeInTheDocument();
@@ -72,6 +74,7 @@ test('up/down buttons call onMovePlace, disabled at group boundaries', async () 
       onAddDay={() => {}}
       onMovePlace={onMovePlace}
       onSortDay={() => {}}
+      onSetDayDate={() => {}}
     />,
   );
 
@@ -79,4 +82,29 @@ test('up/down buttons call onMovePlace, disabled at group boundaries', async () 
   await user.click(screen.getByRole('button', { name: /move First down/i }));
   expect(onMovePlace).toHaveBeenCalledWith(t.places[0].id, 'down');
   expect(screen.getByRole('button', { name: /move First up/i })).toBeDisabled();
+});
+
+test('shows a day date input and reports changes', async () => {
+  const onSetDayDate = vi.fn();
+  const t = tripWithPlaces();
+  const dayId = t.days[0].id;
+  render(
+    <Sidebar
+      trip={t}
+      selectedId={null}
+      categoryFilter={new Set()}
+      dayFilter={null}
+      onSelectPlace={() => {}}
+      onToggleCategory={() => {}}
+      onSetDayFilter={() => {}}
+      onAddDay={() => {}}
+      onMovePlace={() => {}}
+      onSortDay={() => {}}
+      onSetDayDate={onSetDayDate}
+    />,
+  );
+  const input = screen.getByLabelText('Date for Day 1');
+  await userEvent.clear(input);
+  await userEvent.type(input, '2026-07-06');
+  expect(onSetDayDate).toHaveBeenLastCalledWith(dayId, '2026-07-06');
 });

@@ -107,6 +107,12 @@ export function useTrips(store: TripStore, photoStore: PhotoStore) {
     [mutateCurrent],
   );
 
+  const setDayDate = useCallback(
+    (dayId: string, date: string | undefined) =>
+      mutateCurrent((t) => ops.setDayDate(t, dayId, date)),
+    [mutateCurrent],
+  );
+
   const movePlace = useCallback(
     (id: string, dir: 'up' | 'down') =>
       mutateCurrent((t) => ops.movePlaceWithinDay(t, id, dir)),
@@ -154,6 +160,7 @@ export function useTrips(store: TripStore, photoStore: PhotoStore) {
     updatePlace,
     removePlace,
     addDay,
+    setDayDate,
     movePlace,
     sortDay,
     exportBackup,

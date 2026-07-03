@@ -331,6 +331,7 @@ export default function AppShell() {
               onAddDay={trips.addDay}
               onMovePlace={trips.movePlace}
               onSortDay={trips.sortDay}
+              onSetDayDate={trips.setDayDate}
             />
           </div>
         </aside>

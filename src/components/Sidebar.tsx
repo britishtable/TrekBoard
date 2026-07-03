@@ -13,6 +13,7 @@ interface SidebarProps {
   onAddDay(): void;
   onMovePlace(id: string, dir: 'up' | 'down'): void;
   onSortDay(dayId: string | null): void;
+  onSetDayDate(dayId: string, date: string | undefined): void;
 }
 
 export default function Sidebar({
@@ -26,6 +27,7 @@ export default function Sidebar({
   onAddDay,
   onMovePlace,
   onSortDay,
+  onSetDayDate,
 }: SidebarProps) {
   const visible = trip.places.filter((p) => {
     const catOk = categoryFilter.size === 0 || categoryFilter.has(p.category);
@@ -35,10 +37,11 @@ export default function Sidebar({
     return catOk && dayOk;
   });
 
-  const groups: { label: string; dayId: string | null; places: Place[] }[] = [
+  const groups: { label: string; dayId: string | null; date?: string; places: Place[] }[] = [
     ...trip.days.map((d) => ({
       label: d.label,
       dayId: d.id as string | null,
+      date: d.date,
       places: visible.filter((p) => p.dayId === d.id),
     })),
     { label: 'Unassigned', dayId: null, places: visible.filter((p) => p.dayId === null) },
@@ -95,10 +98,21 @@ export default function Sidebar({
       <div className="flex-1 overflow-auto p-3">
         {groups.map((g) => (
           <div key={g.label} className="mb-4">
-            <div className="mb-1 flex items-center justify-between">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                {g.label}
-              </h3>
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  {g.label}
+                </h3>
+                {g.dayId !== null && (
+                  <input
+                    type="date"
+                    aria-label={`Date for ${g.label}`}
+                    value={g.date ?? ''}
+                    onChange={(e) => onSetDayDate(g.dayId as string, e.target.value || undefined)}
+                    className="rounded border border-gray-300 px-1 py-0.5 text-xs text-gray-600"
+                  />
+                )}
+              </div>
               {g.places.length > 1 && (
                 <button
                   type="button"
