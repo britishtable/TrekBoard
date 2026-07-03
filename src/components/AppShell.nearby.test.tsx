@@ -52,7 +52,7 @@ function mapProps(): Record<string, unknown> {
 }
 
 async function searchNearbyFromHotel(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(screen.getByRole('button', { name: /^hotel zed$/i }));
+  await user.click(await screen.findByRole('button', { name: /^hotel zed$/i }));
   await user.click(screen.getByRole('button', { name: /search nearby/i }));
 }
 

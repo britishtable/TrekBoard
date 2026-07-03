@@ -7,7 +7,7 @@ export function createLocalTripStore(
   storage: Storage = window.localStorage,
 ): TripStore {
   return {
-    getTrips(): Trip[] {
+    async getTrips(): Promise<Trip[]> {
       try {
         const raw = storage.getItem(KEY);
         if (!raw) return [];
@@ -18,7 +18,7 @@ export function createLocalTripStore(
         return [];
       }
     },
-    saveTrips(trips: Trip[]): void {
+    async saveTrips(trips: Trip[]): Promise<void> {
       try {
         storage.setItem(KEY, JSON.stringify(trips));
       } catch (err) {

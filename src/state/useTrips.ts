@@ -5,19 +5,30 @@ import * as ops from './tripOps';
 import { serializeBackup, parseBackup } from './backup';
 
 export function useTrips(store: TripStore) {
-  const [trips, setTrips] = useState<Trip[]>(() => store.getTrips());
-  const [currentTripId, setCurrentTripId] = useState<string | null>(
-    () => store.getTrips()[0]?.id ?? null,
-  );
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [currentTripId, setCurrentTripId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const loaded = useRef(false);
 
-  // Persist whenever trips change (skip the very first render).
+  // Initial async load from the store.
   useEffect(() => {
-    if (!loaded.current) {
-      loaded.current = true;
-      return;
-    }
-    store.saveTrips(trips);
+    let cancelled = false;
+    void store.getTrips().then((loadedTrips) => {
+      if (cancelled) return;
+      setTrips(loadedTrips);
+      setCurrentTripId(loadedTrips[0]?.id ?? null);
+      setLoading(false);
+      loaded.current = true; // enable saving only after the load completes
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [store]);
+
+  // Persist whenever trips change, but never before the initial load finished.
+  useEffect(() => {
+    if (!loaded.current) return;
+    void store.saveTrips(trips);
   }, [trips, store]);
 
   const currentTrip = useMemo(
@@ -98,6 +109,7 @@ export function useTrips(store: TripStore) {
   }, []);
 
   return {
+    loading,
     trips,
     currentTrip,
     currentTripId,

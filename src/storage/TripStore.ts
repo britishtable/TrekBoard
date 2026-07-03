@@ -1,6 +1,6 @@
 import type { Trip } from '../types';
 
 export interface TripStore {
-  getTrips(): Trip[];
-  saveTrips(trips: Trip[]): void;
+  getTrips(): Promise<Trip[]>;
+  saveTrips(trips: Trip[]): Promise<void>;
 }

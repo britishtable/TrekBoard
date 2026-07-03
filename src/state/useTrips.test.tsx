@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { useTrips } from './useTrips';
 import { createLocalTripStore } from '../storage/localTripStore';
 import type { Place } from '../types';
@@ -26,15 +26,17 @@ const place: Omit<Place, 'id'> = {
   dayId: null,
 };
 
-test('newTrip creates and selects a trip', () => {
+test('newTrip creates and selects a trip', async () => {
   const { result } = renderHook(() => useTrips(memoryStore()));
+  await waitFor(() => expect(result.current.loading).toBe(false));
   act(() => result.current.newTrip('Paris'));
   expect(result.current.trips).toHaveLength(1);
   expect(result.current.currentTrip?.name).toBe('Paris');
 });
 
-test('importTrips adds trips and selects the first imported', () => {
+test('importTrips adds trips and selects the first imported', async () => {
   const { result } = renderHook(() => useTrips(memoryStore()));
+  await waitFor(() => expect(result.current.loading).toBe(false));
   const imported = addPlace(
     createTrip('Rome'),
     createPlace({ name: 'Colosseum', lat: 41.89, lng: 12.49, category: 'sights', dayId: null }),
@@ -48,26 +50,31 @@ test('importTrips adds trips and selects the first imported', () => {
   expect(result.current.currentTrip?.places).toHaveLength(1);
 });
 
-test('addPlace adds to the current trip', () => {
+test('addPlace adds to the current trip', async () => {
   const { result } = renderHook(() => useTrips(memoryStore()));
+  await waitFor(() => expect(result.current.loading).toBe(false));
   act(() => result.current.newTrip('Paris'));
   act(() => result.current.addPlace(place));
   expect(result.current.currentTrip?.places).toHaveLength(1);
 });
 
-test('persists across hook remounts via the same store', () => {
+test('persists across hook remounts via the same store', async () => {
   const store = memoryStore();
   const first = renderHook(() => useTrips(store));
+  await waitFor(() => expect(first.result.current.loading).toBe(false));
   act(() => first.result.current.newTrip('Paris'));
   act(() => first.result.current.addPlace(place));
+  // saveTrips is async fire-and-forget; wait for the write to reach the store.
+  await waitFor(async () => expect(await store.getTrips()).toHaveLength(1));
 
   const second = renderHook(() => useTrips(store));
-  expect(second.result.current.trips).toHaveLength(1);
+  await waitFor(() => expect(second.result.current.trips).toHaveLength(1));
   expect(second.result.current.trips[0].places).toHaveLength(1);
 });
 
-test('deleteCurrent removes the trip and reselects another', () => {
+test('deleteCurrent removes the trip and reselects another', async () => {
   const { result } = renderHook(() => useTrips(memoryStore()));
+  await waitFor(() => expect(result.current.loading).toBe(false));
   act(() => result.current.newTrip('Paris'));
   act(() => result.current.newTrip('Rome'));
   act(() => result.current.deleteCurrent()); // deletes Rome

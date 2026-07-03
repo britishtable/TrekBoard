@@ -15,26 +15,26 @@ function memoryStorage(): Storage {
   } as Storage;
 }
 
-test('returns empty array when nothing stored', () => {
+test('returns empty array when nothing stored', async () => {
   const store = createLocalTripStore(memoryStorage());
-  expect(store.getTrips()).toEqual([]);
+  expect(await store.getTrips()).toEqual([]);
 });
 
-test('round-trips saved trips', () => {
+test('round-trips saved trips', async () => {
   const store = createLocalTripStore(memoryStorage());
   const trips = [createTrip('Paris')];
-  store.saveTrips(trips);
-  expect(store.getTrips()).toEqual(trips);
+  await store.saveTrips(trips);
+  expect(await store.getTrips()).toEqual(trips);
 });
 
-test('returns empty array on corrupt data instead of throwing', () => {
+test('returns empty array on corrupt data instead of throwing', async () => {
   const backing = memoryStorage();
   backing.setItem('trekboard.trips.v1', '{not json');
   const store = createLocalTripStore(backing);
-  expect(store.getTrips()).toEqual([]);
+  expect(await store.getTrips()).toEqual([]);
 });
 
-test('saveTrips does not throw when storage write fails', () => {
+test('saveTrips does not reject when storage write fails', async () => {
   const failing = {
     getItem: () => null,
     setItem: () => {
@@ -42,5 +42,5 @@ test('saveTrips does not throw when storage write fails', () => {
     },
   } as unknown as Storage;
   const store = createLocalTripStore(failing);
-  expect(() => store.saveTrips([createTrip('Paris')])).not.toThrow();
+  await expect(store.saveTrips([createTrip('Paris')])).resolves.toBeUndefined();
 });

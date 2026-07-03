@@ -38,6 +38,14 @@ export default function AppShell() {
   const selectedPlace =
     current?.places.find((p) => p.id === selectedId) ?? null;
 
+  if (trips.loading) {
+    return (
+      <div className="flex h-screen items-center justify-center text-gray-500">
+        Loading your trips…
+      </div>
+    );
+  }
+
   function toggleCategory(cat: Category) {
     setCategoryFilter((prev) => {
       const next = new Set(prev);
