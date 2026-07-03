@@ -8,26 +8,33 @@ export function useTrips(store: TripStore) {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [currentTripId, setCurrentTripId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const loaded = useRef(false);
+  // The last trips value known to be persisted. Null until the initial load
+  // finishes; set to the loaded value so we never write the just-loaded data
+  // straight back to the store (a redundant write that, for an empty [], would
+  // block the localStorage-to-IndexedDB migration on the next load).
+  const lastSaved = useRef<Trip[] | null>(null);
 
   // Initial async load from the store.
   useEffect(() => {
     let cancelled = false;
     void store.getTrips().then((loadedTrips) => {
       if (cancelled) return;
+      lastSaved.current = loadedTrips; // already in the store — do not re-save it
       setTrips(loadedTrips);
       setCurrentTripId(loadedTrips[0]?.id ?? null);
       setLoading(false);
-      loaded.current = true; // enable saving only after the load completes
     });
     return () => {
       cancelled = true;
     };
   }, [store]);
 
-  // Persist whenever trips change, but never before the initial load finished.
+  // Persist whenever trips change, but never before the initial load finished
+  // and never for the just-loaded value itself.
   useEffect(() => {
-    if (!loaded.current) return;
+    if (lastSaved.current === null) return; // initial load not finished
+    if (trips === lastSaved.current) return; // unchanged since load
+    lastSaved.current = trips;
     void store.saveTrips(trips);
   }, [trips, store]);
 

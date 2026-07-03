@@ -1,7 +1,8 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { useTrips } from './useTrips';
 import { createLocalTripStore } from '../storage/localTripStore';
-import type { Place } from '../types';
+import type { TripStore } from '../storage/TripStore';
+import type { Place, Trip } from '../types';
 import { serializeBackup } from './backup';
 import { addPlace, createPlace, createTrip } from './tripOps';
 
@@ -70,6 +71,29 @@ test('persists across hook remounts via the same store', async () => {
   const second = renderHook(() => useTrips(store));
   await waitFor(() => expect(second.result.current.trips).toHaveLength(1));
   expect(second.result.current.trips[0].places).toHaveLength(1);
+});
+
+test('does not persist the initially loaded trips back to the store', async () => {
+  // Regression: writing the just-loaded value back (an empty []) used to land
+  // in IndexedDB and block the localStorage-to-IndexedDB migration on reload.
+  const saved: Trip[][] = [];
+  const seeded = [createTrip('Loaded')];
+  const store: TripStore = {
+    getTrips: async () => seeded,
+    saveTrips: async (t) => {
+      saved.push(t);
+    },
+  };
+
+  const { result } = renderHook(() => useTrips(store));
+  await waitFor(() => expect(result.current.loading).toBe(false));
+
+  // The initial load must not trigger any write-back.
+  expect(saved).toHaveLength(0);
+
+  // A real mutation still persists.
+  act(() => result.current.newTrip('Second'));
+  await waitFor(() => expect(saved.length).toBeGreaterThan(0));
 });
 
 test('deleteCurrent removes the trip and reselects another', async () => {
