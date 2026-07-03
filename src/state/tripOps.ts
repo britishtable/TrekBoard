@@ -68,24 +68,34 @@ export function movePlaceWithinDay(
   return { ...trip, places };
 }
 
+export function compareByStartTime(a: Place, b: Place): number {
+  const ta = a.startTime ?? '';
+  const tb = b.startTime ?? '';
+  if (ta === '' && tb === '') return 0;
+  if (ta === '') return 1; // untimed to the end
+  if (tb === '') return -1;
+  if (ta < tb) return -1;
+  if (ta > tb) return 1;
+  return 0;
+}
+
+export function setDayDate(
+  trip: Trip,
+  dayId: string,
+  date: string | undefined,
+): Trip {
+  return {
+    ...trip,
+    days: trip.days.map((d) => (d.id === dayId ? { ...d, date: date || undefined } : d)),
+  };
+}
+
 export function sortDayByTime(trip: Trip, dayId: string | null): Trip {
   const groupIdx = trip.places
     .map((p, i) => (p.dayId === dayId ? i : -1))
     .filter((i) => i !== -1);
 
-  const sorted = groupIdx
-    .map((i, order) => ({ p: trip.places[i], order }))
-    .sort((a, b) => {
-      const ta = a.p.startTime ?? '';
-      const tb = b.p.startTime ?? '';
-      if (ta === '' && tb === '') return a.order - b.order; // stable
-      if (ta === '') return 1; // untimed to end
-      if (tb === '') return -1;
-      if (ta < tb) return -1;
-      if (ta > tb) return 1;
-      return a.order - b.order; // stable tie-break
-    })
-    .map((x) => x.p);
+  const sorted = groupIdx.map((i) => trip.places[i]).sort(compareByStartTime);
 
   const places = [...trip.places];
   groupIdx.forEach((idx, k) => {
