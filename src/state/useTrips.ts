@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Place, Trip } from '../types';
 import type { TripStore } from '../storage/TripStore';
+import type { PhotoStore } from '../storage/PhotoStore';
 import * as ops from './tripOps';
 import { serializeBackup, parseBackup } from './backup';
 
-export function useTrips(store: TripStore) {
+export function useTrips(store: TripStore, photoStore: PhotoStore) {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [currentTripId, setCurrentTripId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -66,10 +67,14 @@ export function useTrips(store: TripStore) {
   );
 
   const deleteCurrent = useCallback(() => {
+    const trip = trips.find((t) => t.id === currentTripId);
+    trip?.places.forEach((p) =>
+      p.photoIds?.forEach((pid) => void photoStore.deletePhoto(pid)),
+    );
     const next = trips.filter((t) => t.id !== currentTripId);
     setTrips(next);
     setCurrentTripId(next[0]?.id ?? null);
-  }, [trips, currentTripId]);
+  }, [trips, currentTripId, photoStore]);
 
   const addPlace = useCallback(
     (place: Omit<Place, 'id'>): string => {
@@ -87,8 +92,14 @@ export function useTrips(store: TripStore) {
   );
 
   const removePlace = useCallback(
-    (id: string) => mutateCurrent((t) => ops.removePlace(t, id)),
-    [mutateCurrent],
+    (id: string) => {
+      const target = trips
+        .find((t) => t.id === currentTripId)
+        ?.places.find((p) => p.id === id);
+      target?.photoIds?.forEach((pid) => void photoStore.deletePhoto(pid));
+      mutateCurrent((t) => ops.removePlace(t, id));
+    },
+    [mutateCurrent, trips, currentTripId, photoStore],
   );
 
   const addDay = useCallback(

@@ -21,7 +21,7 @@ const NEARBY_RADIUS_M = 800; // roughly a 10-minute walk
 export default function AppShell() {
   const store = useMemo(() => createIdbTripStore(), []);
   const photoStore = useMemo(() => createIdbPhotoStore(), []);
-  const trips = useTrips(store);
+  const trips = useTrips(store, photoStore);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<Set<Category>>(new Set());

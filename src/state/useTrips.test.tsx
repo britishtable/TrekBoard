@@ -2,6 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { useTrips } from './useTrips';
 import { createLocalTripStore } from '../storage/localTripStore';
 import type { TripStore } from '../storage/TripStore';
+import type { PhotoStore } from '../storage/PhotoStore';
 import type { Place, Trip } from '../types';
 import { serializeBackup } from './backup';
 import { addPlace, createPlace, createTrip } from './tripOps';
@@ -19,6 +20,15 @@ function memoryStore() {
   return createLocalTripStore(storage);
 }
 
+function stubPhotoStore(deleted: string[] = []): PhotoStore {
+  return {
+    getPhoto: async () => undefined,
+    putPhoto: async () => {},
+    deletePhoto: async (id) => void deleted.push(id),
+    getAllPhotos: async () => [],
+  };
+}
+
 const place: Omit<Place, 'id'> = {
   name: 'Louvre',
   lat: 48.86,
@@ -28,7 +38,7 @@ const place: Omit<Place, 'id'> = {
 };
 
 test('newTrip creates and selects a trip', async () => {
-  const { result } = renderHook(() => useTrips(memoryStore()));
+  const { result } = renderHook(() => useTrips(memoryStore(), stubPhotoStore()));
   await waitFor(() => expect(result.current.loading).toBe(false));
   act(() => result.current.newTrip('Paris'));
   expect(result.current.trips).toHaveLength(1);
@@ -36,7 +46,7 @@ test('newTrip creates and selects a trip', async () => {
 });
 
 test('importTrips adds trips and selects the first imported', async () => {
-  const { result } = renderHook(() => useTrips(memoryStore()));
+  const { result } = renderHook(() => useTrips(memoryStore(), stubPhotoStore()));
   await waitFor(() => expect(result.current.loading).toBe(false));
   const imported = addPlace(
     createTrip('Rome'),
@@ -52,7 +62,7 @@ test('importTrips adds trips and selects the first imported', async () => {
 });
 
 test('addPlace adds to the current trip', async () => {
-  const { result } = renderHook(() => useTrips(memoryStore()));
+  const { result } = renderHook(() => useTrips(memoryStore(), stubPhotoStore()));
   await waitFor(() => expect(result.current.loading).toBe(false));
   act(() => result.current.newTrip('Paris'));
   act(() => result.current.addPlace(place));
@@ -61,14 +71,14 @@ test('addPlace adds to the current trip', async () => {
 
 test('persists across hook remounts via the same store', async () => {
   const store = memoryStore();
-  const first = renderHook(() => useTrips(store));
+  const first = renderHook(() => useTrips(store, stubPhotoStore()));
   await waitFor(() => expect(first.result.current.loading).toBe(false));
   act(() => first.result.current.newTrip('Paris'));
   act(() => first.result.current.addPlace(place));
   // saveTrips is async fire-and-forget; wait for the write to reach the store.
   await waitFor(async () => expect(await store.getTrips()).toHaveLength(1));
 
-  const second = renderHook(() => useTrips(store));
+  const second = renderHook(() => useTrips(store, stubPhotoStore()));
   await waitFor(() => expect(second.result.current.trips).toHaveLength(1));
   expect(second.result.current.trips[0].places).toHaveLength(1);
 });
@@ -85,7 +95,7 @@ test('does not persist the initially loaded trips back to the store', async () =
     },
   };
 
-  const { result } = renderHook(() => useTrips(store));
+  const { result } = renderHook(() => useTrips(store, stubPhotoStore()));
   await waitFor(() => expect(result.current.loading).toBe(false));
 
   // The initial load must not trigger any write-back.
@@ -97,11 +107,43 @@ test('does not persist the initially loaded trips back to the store', async () =
 });
 
 test('deleteCurrent removes the trip and reselects another', async () => {
-  const { result } = renderHook(() => useTrips(memoryStore()));
+  const { result } = renderHook(() => useTrips(memoryStore(), stubPhotoStore()));
   await waitFor(() => expect(result.current.loading).toBe(false));
   act(() => result.current.newTrip('Paris'));
   act(() => result.current.newTrip('Rome'));
   act(() => result.current.deleteCurrent()); // deletes Rome
   expect(result.current.trips).toHaveLength(1);
   expect(result.current.currentTrip?.name).toBe('Paris');
+});
+
+test('removePlace deletes that place\'s photos', async () => {
+  const deleted: string[] = [];
+  const { result } = renderHook(() =>
+    useTrips(memoryStore(), stubPhotoStore(deleted)),
+  );
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  act(() => result.current.newTrip('Trip'));
+  let id = '';
+  act(() => {
+    id = result.current.addPlace(place);
+  });
+  act(() => result.current.updatePlace(id, { photoIds: ['ph1', 'ph2'] }));
+  act(() => result.current.removePlace(id));
+  await waitFor(() => expect(deleted.sort()).toEqual(['ph1', 'ph2']));
+});
+
+test('deleteCurrent deletes photos across the trip', async () => {
+  const deleted: string[] = [];
+  const { result } = renderHook(() =>
+    useTrips(memoryStore(), stubPhotoStore(deleted)),
+  );
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  act(() => result.current.newTrip('Trip'));
+  let id = '';
+  act(() => {
+    id = result.current.addPlace(place);
+  });
+  act(() => result.current.updatePlace(id, { photoIds: ['ph9'] }));
+  act(() => result.current.deleteCurrent());
+  await waitFor(() => expect(deleted).toContain('ph9'));
 });
