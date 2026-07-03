@@ -6,7 +6,7 @@ import type { IdentifiedPoi } from '../lib/pickPoi';
 import type { Bounds } from '../lib/bbox';
 import { boundsAroundPoint, isBboxSearchable } from '../lib/bbox';
 import { getDiscoveryType } from '../config/discoveryTypes';
-import { createLocalTripStore } from '../storage/localTripStore';
+import { createIdbTripStore } from '../storage/idbTripStore';
 import { useTrips } from '../state/useTrips';
 import MapView from './MapView';
 import SearchBox from './SearchBox';
@@ -18,7 +18,7 @@ const DEFAULT_CENTER: [number, number] = [48.8566, 2.3522]; // Paris
 const NEARBY_RADIUS_M = 800; // roughly a 10-minute walk
 
 export default function AppShell() {
-  const store = useMemo(() => createLocalTripStore(), []);
+  const store = useMemo(() => createIdbTripStore(), []);
   const trips = useTrips(store);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
