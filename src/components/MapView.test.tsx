@@ -21,6 +21,9 @@ vi.mock('maplibre-gl', () => {
     queryRenderedFeatures() {
       return [];
     }
+    addControl() {
+      return this;
+    }
   }
   class Marker {
     setLngLat() {
@@ -46,7 +49,15 @@ vi.mock('maplibre-gl', () => {
     }
     remove() {}
   }
-  return { default: { Map, Marker, Popup } };
+  class GeolocateControl {
+    on() {
+      return this;
+    }
+    trigger() {
+      return true;
+    }
+  }
+  return { default: { Map, Marker, Popup, GeolocateControl } };
 });
 
 import MapView from './MapView';

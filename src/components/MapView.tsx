@@ -24,6 +24,9 @@ interface MapViewProps {
   onAddSuggestion(s: Suggestion): void;
   onIdentifyAdd(poi: IdentifiedPoi): void;
   onBoundsChange(b: Bounds): void;
+  onLocate?(lat: number, lng: number): void;
+  onLocateError?(): void;
+  locateRequestId?: number;
 }
 
 function toBounds(map: maplibregl.Map): Bounds {
@@ -76,6 +79,9 @@ export default function MapView({
   onAddSuggestion,
   onIdentifyAdd,
   onBoundsChange,
+  onLocate = () => {},
+  onLocateError = () => {},
+  locateRequestId = 0,
 }: MapViewProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -92,6 +98,11 @@ export default function MapView({
   addSuggestionRef.current = onAddSuggestion;
   identifyAddRef.current = onIdentifyAdd;
   boundsRef.current = onBoundsChange;
+  const locateRef = useRef(onLocate);
+  const locateErrorRef = useRef(onLocateError);
+  locateRef.current = onLocate;
+  locateErrorRef.current = onLocateError;
+  const geolocateRef = useRef<maplibregl.GeolocateControl | null>(null);
 
   // Initialize the map once.
   useEffect(() => {
@@ -102,6 +113,20 @@ export default function MapView({
       center: [center[1], center[0]], // MapLibre uses [lng, lat]
       zoom: 13,
     });
+
+    const geolocate = new maplibregl.GeolocateControl({
+      positionOptions: { enableHighAccuracy: true },
+      trackUserLocation: true,
+      showUserLocation: true,
+      showAccuracyCircle: true,
+    });
+    map.addControl(geolocate);
+    geolocate.on('geolocate', (pos) => {
+      const c = (pos as unknown as GeolocationPosition).coords;
+      locateRef.current(c.latitude, c.longitude);
+    });
+    geolocate.on('error', () => locateErrorRef.current());
+    geolocateRef.current = geolocate;
 
     map.on('load', () => {
       boundsRef.current(toBounds(map));
@@ -183,6 +208,16 @@ export default function MapView({
   useEffect(() => {
     mapRef.current?.setCenter([center[1], center[0]]);
   }, [center]);
+
+  // Trigger the geolocate control when AppShell asks (never on first mount).
+  const firstLocateReq = useRef(true);
+  useEffect(() => {
+    if (firstLocateReq.current) {
+      firstLocateReq.current = false;
+      return;
+    }
+    geolocateRef.current?.trigger();
+  }, [locateRequestId]);
 
   // Frame a nearby-search box when one is set.
   useEffect(() => {
