@@ -38,6 +38,9 @@ export default function AppShell() {
   const discoveryAbort = useRef<AbortController | null>(null);
   const [nearbyAnchor, setNearbyAnchor] = useState<{ lat: number; lng: number } | null>(null);
   const [frameBounds, setFrameBounds] = useState<Bounds | null>(null);
+  const [myLocation, setMyLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locateRequestId, setLocateRequestId] = useState(0);
+  const [pendingNearMeType, setPendingNearMeType] = useState<string | null>(null);
 
   const current = trips.currentTrip;
   const selectedPlace =
@@ -132,6 +135,36 @@ export default function AppShell() {
     setNearbyAnchor({ lat: selectedPlace.lat, lng: selectedPlace.lng });
     setFrameBounds(box);
     runDiscoverySearch(box, typeId);
+  }
+
+  function runNearMeSearch(loc: { lat: number; lng: number }, typeId: string) {
+    const box = boundsAroundPoint(loc.lat, loc.lng, NEARBY_RADIUS_M);
+    setNearbyAnchor(loc);
+    setFrameBounds(box);
+    runDiscoverySearch(box, typeId);
+  }
+
+  function handleNearMeSearch(typeId: string) {
+    if (myLocation) {
+      runNearMeSearch(myLocation, typeId);
+    } else {
+      setPendingNearMeType(typeId);
+      setLocateRequestId((n) => n + 1);
+    }
+  }
+
+  function handleLocate(lat: number, lng: number) {
+    const loc = { lat, lng };
+    setMyLocation(loc);
+    if (pendingNearMeType) {
+      runNearMeSearch(loc, pendingNearMeType);
+      setPendingNearMeType(null);
+    }
+  }
+
+  function handleLocateError() {
+    setPendingNearMeType(null);
+    setDiscoveryStatus({ kind: 'error', message: "Couldn't get your location." });
   }
 
   function handleAddSuggestion(s: Suggestion) {
@@ -343,6 +376,7 @@ export default function AppShell() {
                   hasSuggestions={suggestions.length > 0}
                   onSearch={handleDiscoverySearch}
                   onClear={clearDiscovery}
+                  onSearchNearMe={handleNearMeSearch}
                 />
               </div>
               <div className="min-h-0 flex-1">
@@ -381,6 +415,9 @@ export default function AppShell() {
                 onAddSuggestion={handleAddSuggestion}
                 onIdentifyAdd={handleIdentifyAdd}
                 onBoundsChange={setBounds}
+                onLocate={handleLocate}
+                onLocateError={handleLocateError}
+                locateRequestId={locateRequestId}
               />
             </main>
           </>

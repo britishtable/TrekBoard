@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import type { Trip } from '../types';
@@ -105,4 +105,43 @@ test('clear resets suggestions, anchor, and frame', async () => {
   expect(mapProps().suggestions).toHaveLength(0);
   expect(mapProps().anchor).toBeNull();
   expect(mapProps().frameBounds).toBeNull();
+});
+
+test('Near me searches around the reported location', async () => {
+  const user = userEvent.setup();
+  render(<AppShell />);
+  const nearMe = await screen.findByRole('button', { name: /near me/i });
+
+  act(() => {
+    (mapProps().onLocate as (lat: number, lng: number) => void)(48.86, 2.35);
+  });
+  await user.click(nearMe);
+  await screen.findAllByText(/found/i);
+
+  expect(mocks.searchArea).toHaveBeenCalled();
+  const [bounds] = mocks.searchArea.mock.calls[0];
+  expect(bounds.south).toBeLessThan(48.86);
+  expect(bounds.north).toBeGreaterThan(48.86);
+  expect(bounds.west).toBeLessThan(2.35);
+  expect(bounds.east).toBeGreaterThan(2.35);
+  expect(mapProps().anchor).toEqual({ lat: 48.86, lng: 2.35 });
+  expect(mapProps().frameBounds).not.toBeNull();
+});
+
+test('Near me without a fix triggers locate, then searches on the fix', async () => {
+  const user = userEvent.setup();
+  render(<AppShell />);
+  const nearMe = await screen.findByRole('button', { name: /near me/i });
+  const before = mapProps().locateRequestId as number;
+
+  await user.click(nearMe); // no location yet
+  expect(mapProps().locateRequestId as number).toBe(before + 1);
+  expect(mocks.searchArea).not.toHaveBeenCalled();
+
+  act(() => {
+    (mapProps().onLocate as (lat: number, lng: number) => void)(48.86, 2.35);
+  });
+  await screen.findAllByText(/found/i);
+  expect(mocks.searchArea).toHaveBeenCalled();
+  expect(mapProps().anchor).toEqual({ lat: 48.86, lng: 2.35 });
 });
