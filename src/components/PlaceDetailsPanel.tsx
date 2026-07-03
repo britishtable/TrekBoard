@@ -3,11 +3,14 @@ import type { Category, Day, Place } from '../types';
 import { CATEGORIES } from '../config/categories';
 import { DISCOVERY_TYPES } from '../config/discoveryTypes';
 import type { DiscoveryStatus } from './DiscoveryPanel';
+import PhotoSection from './PhotoSection';
+import type { PhotoStore } from '../storage/PhotoStore';
 
 interface PlaceDetailsPanelProps {
   place: Place;
   days: Day[];
   discoveryStatus?: DiscoveryStatus;
+  photoStore: PhotoStore;
   onChange(patch: Partial<Omit<Place, 'id'>>): void;
   onDelete(): void;
   onClose(): void;
@@ -33,6 +36,7 @@ export default function PlaceDetailsPanel({
   place,
   days,
   discoveryStatus = { kind: 'idle' },
+  photoStore,
   onChange,
   onDelete,
   onClose,
@@ -133,6 +137,8 @@ export default function PlaceDetailsPanel({
             className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
           />
         </label>
+
+        <PhotoSection place={place} photoStore={photoStore} onChange={onChange} />
       </fieldset>
 
       <div className="space-y-1 border-t border-gray-200 pt-3">

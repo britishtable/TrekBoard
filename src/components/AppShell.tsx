@@ -7,6 +7,7 @@ import type { Bounds } from '../lib/bbox';
 import { boundsAroundPoint, isBboxSearchable } from '../lib/bbox';
 import { getDiscoveryType } from '../config/discoveryTypes';
 import { createIdbTripStore } from '../storage/idbTripStore';
+import { createIdbPhotoStore } from '../storage/idbPhotoStore';
 import { useTrips } from '../state/useTrips';
 import MapView from './MapView';
 import SearchBox from './SearchBox';
@@ -19,6 +20,7 @@ const NEARBY_RADIUS_M = 800; // roughly a 10-minute walk
 
 export default function AppShell() {
   const store = useMemo(() => createIdbTripStore(), []);
+  const photoStore = useMemo(() => createIdbPhotoStore(), []);
   const trips = useTrips(store);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -358,6 +360,7 @@ export default function AppShell() {
               place={selectedPlace}
               days={current.days}
               discoveryStatus={discoveryStatus}
+              photoStore={photoStore}
               onChange={(patch) => trips.updatePlace(selectedPlace.id, patch)}
               onDelete={() => {
                 trips.removePlace(selectedPlace.id);

@@ -2,6 +2,7 @@ import type { ComponentProps } from 'react';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import PlaceDetailsPanel from './PlaceDetailsPanel';
+import { createIdbPhotoStore } from '../storage/idbPhotoStore';
 import type { Place } from '../types';
 
 const place: Place = {
@@ -20,6 +21,7 @@ function renderPanel(overrides: Props = {}) {
     <PlaceDetailsPanel
       place={place}
       days={[]}
+      photoStore={createIdbPhotoStore()}
       onChange={() => {}}
       onDelete={() => {}}
       onClose={() => {}}
