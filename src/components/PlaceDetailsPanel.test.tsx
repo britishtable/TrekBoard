@@ -1,5 +1,5 @@
 import type { ComponentProps } from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import PlaceDetailsPanel from './PlaceDetailsPanel';
 import type { Place } from '../types';
@@ -74,4 +74,18 @@ test('nearby status renders error messages', () => {
 test('search nearby button is disabled while loading', () => {
   renderPanel({ discoveryStatus: { kind: 'loading' } });
   expect(screen.getByRole('button', { name: /search nearby/i })).toBeDisabled();
+});
+
+test('toggling Visited patches the place', async () => {
+  const user = userEvent.setup();
+  const onChange = vi.fn();
+  renderPanel({ onChange });
+  await user.click(screen.getByLabelText(/visited/i));
+  expect(onChange).toHaveBeenCalledWith({ visited: true });
+});
+
+test('the note lives in the journal section', () => {
+  renderPanel({ place: { ...place, note: 'lovely beach' } });
+  const journal = screen.getByRole('group', { name: /journal/i });
+  expect(within(journal).getByDisplayValue('lovely beach')).toBeInTheDocument();
 });

@@ -109,15 +109,31 @@ export default function PlaceDetailsPanel({
         />
       </label>
 
-      <label className="text-xs font-medium text-gray-600">
-        Note
-        <textarea
-          value={place.note ?? ''}
-          onChange={(e) => onChange({ note: e.target.value })}
-          rows={3}
-          className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
-        />
-      </label>
+      <fieldset
+        aria-label="Journal"
+        className="space-y-3 border-t border-gray-200 pt-3"
+      >
+        <legend className="text-xs font-semibold text-gray-700">Journal</legend>
+
+        <label className="flex items-center gap-2 text-xs font-medium text-gray-600">
+          <input
+            type="checkbox"
+            checked={place.visited ?? false}
+            onChange={(e) => onChange({ visited: e.target.checked })}
+          />
+          Visited
+        </label>
+
+        <label className="block text-xs font-medium text-gray-600">
+          Note
+          <textarea
+            value={place.note ?? ''}
+            onChange={(e) => onChange({ note: e.target.value })}
+            rows={3}
+            className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+          />
+        </label>
+      </fieldset>
 
       <div className="space-y-1 border-t border-gray-200 pt-3">
         <h3 className="text-xs font-semibold text-gray-700">What's nearby</h3>
