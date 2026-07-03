@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { Place, Trip } from '../types';
+import type { Place, PhotoRecord, Trip } from '../types';
 import type { TripStore } from '../storage/TripStore';
 import type { PhotoStore } from '../storage/PhotoStore';
 import * as ops from './tripOps';
-import { serializeBackup, parseBackup } from './backup';
+import { parseBackup, exportBackupZip, importBackupZip } from './backup';
 
 export function useTrips(store: TripStore, photoStore: PhotoStore) {
   const [trips, setTrips] = useState<Trip[]>([]);
@@ -118,13 +118,28 @@ export function useTrips(store: TripStore, photoStore: PhotoStore) {
     [mutateCurrent],
   );
 
-  const exportTrips = useCallback((): string => serializeBackup(trips), [trips]);
+  const exportBackup = useCallback(async (): Promise<Blob> => {
+    const photos = await photoStore.getAllPhotos();
+    return exportBackupZip(trips, photos);
+  }, [trips, photoStore]);
 
-  const importTrips = useCallback((json: string): void => {
-    const added = parseBackup(json);
-    setTrips((prev) => [...prev, ...added]);
-    if (added[0]) setCurrentTripId(added[0].id);
-  }, []);
+  const importBackup = useCallback(
+    async (file: File): Promise<void> => {
+      let added: Trip[];
+      let photos: PhotoRecord[] = [];
+      if (file.name.toLowerCase().endsWith('.zip')) {
+        const res = await importBackupZip(file);
+        added = res.trips;
+        photos = res.photos;
+      } else {
+        added = parseBackup(await file.text());
+      }
+      for (const p of photos) await photoStore.putPhoto(p);
+      setTrips((prev) => [...prev, ...added]);
+      if (added[0]) setCurrentTripId(added[0].id);
+    },
+    [photoStore],
+  );
 
   return {
     loading,
@@ -141,7 +156,7 @@ export function useTrips(store: TripStore, photoStore: PhotoStore) {
     addDay,
     movePlace,
     sortDay,
-    exportTrips,
-    importTrips,
+    exportBackup,
+    importBackup,
   };
 }

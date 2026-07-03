@@ -161,13 +161,12 @@ export default function AppShell() {
     setFrameBounds(null);
   }
 
-  function handleExport() {
-    const json = trips.exportTrips();
-    const blob = new Blob([json], { type: 'application/json' });
+  async function handleExport() {
+    const blob = await trips.exportBackup();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `trekboard-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `trekboard-backup-${new Date().toISOString().slice(0, 10)}.zip`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -177,7 +176,7 @@ export default function AppShell() {
     e.target.value = ''; // allow re-importing the same file later
     if (!file) return;
     try {
-      trips.importTrips(await file.text());
+      await trips.importBackup(file);
       setSelectedId(null);
     } catch {
       window.alert("Couldn't import: that file isn't a valid TrekBoard backup.");
@@ -208,7 +207,7 @@ export default function AppShell() {
         <input
           ref={importInputRef}
           type="file"
-          accept="application/json"
+          accept=".zip,application/zip,application/json"
           className="hidden"
           onChange={handleImportFile}
         />
@@ -283,7 +282,7 @@ export default function AppShell() {
         <input
           ref={importInputRef}
           type="file"
-          accept="application/json"
+          accept=".zip,application/zip,application/json"
           className="hidden"
           onChange={handleImportFile}
         />

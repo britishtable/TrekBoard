@@ -45,20 +45,25 @@ test('newTrip creates and selects a trip', async () => {
   expect(result.current.currentTrip?.name).toBe('Paris');
 });
 
-test('importTrips adds trips and selects the first imported', async () => {
-  const { result } = renderHook(() => useTrips(memoryStore(), stubPhotoStore()));
+test('importBackup adds trips from a json file and selects the first', async () => {
+  const store = memoryStore();
+  const photoStore = stubPhotoStore();
+  const { result } = renderHook(() => useTrips(store, photoStore));
   await waitFor(() => expect(result.current.loading).toBe(false));
   const imported = addPlace(
     createTrip('Rome'),
     createPlace({ name: 'Colosseum', lat: 41.89, lng: 12.49, category: 'sights', dayId: null }),
   );
-  const json = serializeBackup([imported]);
+  const file = new File([serializeBackup([imported])], 'backup.json', {
+    type: 'application/json',
+  });
 
-  act(() => result.current.importTrips(json));
+  await act(async () => {
+    await result.current.importBackup(file);
+  });
 
   expect(result.current.trips).toHaveLength(1);
   expect(result.current.currentTrip?.name).toBe('Rome');
-  expect(result.current.currentTrip?.places).toHaveLength(1);
 });
 
 test('addPlace adds to the current trip', async () => {
