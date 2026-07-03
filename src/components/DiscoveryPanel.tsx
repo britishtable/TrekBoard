@@ -46,24 +46,24 @@ export default function DiscoveryPanel({
 
   return (
     <div className="space-y-1">
+      <select
+        aria-label="Discover type"
+        value={typeId}
+        onChange={(e) => setTypeId(e.target.value)}
+        className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
+      >
+        {DISCOVERY_TYPES.map((t) => (
+          <option key={t.id} value={t.id}>
+            {t.label}
+          </option>
+        ))}
+      </select>
       <div className="flex items-center gap-2">
-        <select
-          aria-label="Discover type"
-          value={typeId}
-          onChange={(e) => setTypeId(e.target.value)}
-          className="flex-1 rounded border border-gray-300 px-2 py-1 text-sm"
-        >
-          {DISCOVERY_TYPES.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.label}
-            </option>
-          ))}
-        </select>
         <button
           type="button"
           onClick={() => onSearch(typeId)}
           disabled={loading}
-          className="whitespace-nowrap rounded bg-blue-600 px-2 py-1 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="flex-1 rounded bg-blue-600 px-2 py-1 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
         >
           Search this area
         </button>
@@ -71,7 +71,7 @@ export default function DiscoveryPanel({
           type="button"
           onClick={() => onSearchNearMe(typeId)}
           disabled={loading}
-          className="whitespace-nowrap rounded border border-gray-300 px-2 py-1 text-sm hover:bg-gray-100 disabled:opacity-50"
+          className="flex-1 rounded border border-gray-300 px-2 py-1 text-sm hover:bg-gray-100 disabled:opacity-50"
         >
           Near me
         </button>
