@@ -34,6 +34,29 @@ function toBounds(map: maplibregl.Map): Bounds {
   return { south: b.getSouth(), west: b.getWest(), north: b.getNorth(), east: b.getEast() };
 }
 
+// MapLibre marks a tile that fails to fetch as 'errored' and never re-requests
+// it — panning back over it doesn't help, and even source.reload() skips
+// errored tiles. On a free tile host a single dropped request therefore leaves
+// a permanent blank square. These shapes let us re-request the errored tile
+// ourselves via the (non-public but stable) source cache.
+const MAX_TILE_RETRIES = 3;
+
+interface TileErrorEvent {
+  sourceId?: string;
+  tile?: { tileID?: { key?: string } };
+}
+
+interface SourceDataEvent {
+  dataType?: string;
+  tile?: { state?: string; tileID?: { key?: string } };
+}
+
+interface MapWithSourceCaches {
+  style?: {
+    sourceCaches?: Record<string, { _reloadTile?(key: string, state: string): void } | undefined>;
+  };
+}
+
 function placeElement(color: string, selected: boolean): HTMLDivElement {
   const el = document.createElement('div');
   const size = selected ? 20 : 16;
@@ -128,6 +151,41 @@ export default function MapView({
     geolocate.on('error', () => locateErrorRef.current());
     geolocateRef.current = geolocate;
 
+    // Re-request tiles that failed to load, with backoff and a per-tile cap so
+    // a genuinely-down host isn't hammered. Counts reset when a tile loads, so
+    // a later failure of the same tile gets a fresh budget.
+    const retryCounts = new Map<string, number>();
+    const retryTimers = new Set<ReturnType<typeof setTimeout>>();
+    map.on('error', (e) => {
+      const evt = e as unknown as TileErrorEvent;
+      const sourceId = evt.sourceId;
+      const key = evt.tile?.tileID?.key;
+      if (!sourceId || key == null) return;
+      const attempts = (retryCounts.get(key) ?? 0) + 1;
+      if (attempts > MAX_TILE_RETRIES) return;
+      retryCounts.set(key, attempts);
+      const timer = setTimeout(() => {
+        retryTimers.delete(timer);
+        const cache = (map as unknown as MapWithSourceCaches).style?.sourceCaches?.[sourceId];
+        cache?._reloadTile?.(key, 'reloading');
+        map.triggerRepaint();
+      }, attempts * 500);
+      retryTimers.add(timer);
+    });
+    map.on('data', (e) => {
+      const evt = e as unknown as SourceDataEvent;
+      if (evt.dataType === 'source' && evt.tile?.state === 'loaded') {
+        const key = evt.tile.tileID?.key;
+        if (key != null) retryCounts.delete(key);
+      }
+    });
+
+    // MapLibre auto-handles window resizes but not container ones (e.g. the
+    // mobile Map/List toggle flipping the map between display:none and block),
+    // which otherwise leaves the map blank until the next pan.
+    const resizeObserver = new ResizeObserver(() => map.resize());
+    resizeObserver.observe(hostRef.current);
+
     map.on('load', () => {
       boundsRef.current(toBounds(map));
       if (!map.getLayer('trekboard-peaks')) {
@@ -198,6 +256,9 @@ export default function MapView({
 
     mapRef.current = map;
     return () => {
+      resizeObserver.disconnect();
+      retryTimers.forEach((t) => clearTimeout(t));
+      retryTimers.clear();
       map.remove();
       mapRef.current = null;
     };

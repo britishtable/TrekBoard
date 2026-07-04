@@ -10,6 +10,17 @@ import { IDBFactory } from 'fake-indexeddb';
 globalThis.Blob = NodeBlob as unknown as typeof Blob;
 globalThis.File = NodeFile as unknown as typeof File;
 
+// jsdom has no ResizeObserver; MapView observes its container to keep the map
+// sized. A no-op stub is enough for tests that don't drive resizes (the
+// rendering tests install their own capturing stub in a beforeEach).
+if (!('ResizeObserver' in globalThis)) {
+  globalThis.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  } as unknown as typeof ResizeObserver;
+}
+
 beforeEach(() => {
   // Fresh, empty IndexedDB for every test.
   globalThis.indexedDB = new IDBFactory();
